@@ -8,6 +8,8 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- HTMX -->
     <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
     <!-- Custom CSS -->
     <link rel="stylesheet" href="/static/css/style.css">
     <script>
@@ -40,8 +42,102 @@
         }
     </script>
 </head>
-<body class="bg-ui-bgSubtle text-ui-textMain min-h-screen">
-    {% block content %}
-    {% endblock %}
+<body class="bg-slate-50 text-ui-textMain min-h-screen flex">
+    <!-- Left Sidebar -->
+    <aside class="hidden md:flex w-64 min-h-screen bg-[#002B49] text-slate-200 flex-col justify-between p-4 fixed left-0 top-0 bottom-0 overflow-y-auto border-r border-slate-800 shadow-lg z-30">
+        <div>
+            <!-- Brand -->
+            <div class="mb-8 px-3">
+                <h2 class="text-xl font-bold text-white">APIIT Kandy</h2>
+                <p class="text-sm text-blue-200 mt-1">Toastmasters CRM</p>
+            </div>
+            
+            <!-- Dashboard -->
+            <a href="/" class="flex items-center px-3 py-2 text-sm rounded-lg transition-all text-slate-300 hover:text-white hover:bg-[#004165]/50 {% if active_page == 'dashboard' %}bg-[#772432] text-white font-semibold{% endif %} mb-6">
+                <i data-lucide="layout-dashboard" class="w-5 h-5 mr-3 inline-block"></i>
+                Dashboard
+            </a>
+
+            <!-- CRM Section -->
+            <div class="mb-6">
+                <div class="px-3 mb-2 text-xs font-semibold tracking-wider text-slate-400 uppercase">CRM</div>
+                <nav class="space-y-1">
+                    <a href="#" hx-get="/prospects" hx-target="#main-content" class="flex items-center px-3 py-2 text-sm rounded-lg transition-all text-slate-300 hover:text-white hover:bg-[#004165]/50 {% if active_page == 'guests' %}bg-[#772432] text-white font-semibold{% endif %}">
+                        <i data-lucide="user-plus" class="w-5 h-5 mr-3 inline-block"></i>
+                        Guests
+                    </a>
+                    <a href="#" class="flex items-center px-3 py-2 text-sm rounded-lg transition-all text-slate-300 hover:text-white hover:bg-[#004165]/50 {% if active_page == 'members' %}bg-[#772432] text-white font-semibold{% endif %}">
+                        <i data-lucide="users" class="w-5 h-5 mr-3 inline-block"></i>
+                        Members
+                    </a>
+                    <a href="#" class="flex items-center px-3 py-2 text-sm rounded-lg transition-all text-slate-300 hover:text-white hover:bg-[#004165]/50 {% if active_page == 'follow_ups' %}bg-[#772432] text-white font-semibold{% endif %}">
+                        <i data-lucide="phone-incoming" class="w-5 h-5 mr-3 inline-block"></i>
+                        Follow-ups
+                    </a>
+                </nav>
+            </div>
+
+            <!-- MEETINGS Section -->
+            <div class="mb-6">
+                <div class="px-3 mb-2 text-xs font-semibold tracking-wider text-slate-400 uppercase">Meetings</div>
+                <nav class="space-y-1">
+                    <a href="#" hx-get="/meetings" hx-target="#main-content" class="flex items-center px-3 py-2 text-sm rounded-lg transition-all text-slate-300 hover:text-white hover:bg-[#004165]/50 {% if active_page == 'attendance' %}bg-[#772432] text-white font-semibold{% endif %}">
+                        <i data-lucide="calendar-check" class="w-5 h-5 mr-3 inline-block"></i>
+                        Attendance
+                    </a>
+                    <a href="#" class="flex items-center px-3 py-2 text-sm rounded-lg transition-all text-slate-300 hover:text-white hover:bg-[#004165]/50 {% if active_page == 'agenda' %}bg-[#772432] text-white font-semibold{% endif %}">
+                        <i data-lucide="file-text" class="w-5 h-5 mr-3 inline-block"></i>
+                        Agenda
+                    </a>
+                    <a href="#" class="flex items-center px-3 py-2 text-sm rounded-lg transition-all text-slate-300 hover:text-white hover:bg-[#004165]/50 {% if active_page == 'evaluations' %}bg-[#772432] text-white font-semibold{% endif %}">
+                        <i data-lucide="award" class="w-5 h-5 mr-3 inline-block"></i>
+                        Evaluations
+                    </a>
+                </nav>
+            </div>
+
+            <!-- MANAGEMENT Section -->
+            <div class="mb-6">
+                <div class="px-3 mb-2 text-xs font-semibold tracking-wider text-slate-400 uppercase">Management</div>
+                <nav class="space-y-1">
+                    <a href="#" hx-get="/roles" hx-target="#main-content" class="flex items-center px-3 py-2 text-sm rounded-lg transition-all text-slate-300 hover:text-white hover:bg-[#004165]/50 {% if active_page == 'role_matrix' %}bg-[#772432] text-white font-semibold{% endif %}">
+                        <i data-lucide="grid" class="w-5 h-5 mr-3 inline-block"></i>
+                        Role Matrix
+                    </a>
+                    <a href="#" class="flex items-center px-3 py-2 text-sm rounded-lg transition-all text-slate-300 hover:text-white hover:bg-[#004165]/50 {% if active_page == 'reports' %}bg-[#772432] text-white font-semibold{% endif %}">
+                        <i data-lucide="bar-chart-3" class="w-5 h-5 mr-3 inline-block"></i>
+                        Reports
+                    </a>
+                </nav>
+            </div>
+        </div>
+
+        <!-- Footer / Settings -->
+        <div class="mt-auto pt-4 border-t border-slate-700/50">
+            <nav class="space-y-1">
+                <a href="#" class="flex items-center px-3 py-2 text-sm rounded-lg transition-all text-slate-300 hover:text-white hover:bg-[#004165]/50 {% if active_page == 'settings' %}bg-[#772432] text-white font-semibold{% endif %}">
+                    <i data-lucide="settings" class="w-5 h-5 mr-3 inline-block"></i>
+                    Settings
+                </a>
+                <a href="/logout" class="flex items-center px-3 py-2 text-sm rounded-lg transition-all text-red-400 hover:text-red-300 hover:bg-red-900/20 mt-2">
+                    <i data-lucide="log-out" class="w-5 h-5 mr-3 inline-block"></i>
+                    Logout
+                </a>
+            </nav>
+        </div>
+    </aside>
+
+    <!-- Main Body Area -->
+    <main class="w-full md:ml-64 flex-1 bg-slate-50 min-h-screen flex flex-col">
+        {% block content %}
+        {% endblock %}
+    </main>
+    
+    <script>
+      lucide.createIcons();
+      document.body.addEventListener('htmx:afterSettle', function() {
+          lucide.createIcons();
+      });
+    </script>
 </body>
 </html>

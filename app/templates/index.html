@@ -3,36 +3,216 @@
 {% block title %}Dashboard - Toastmasters CRM{% endblock %}
 
 {% block content %}
-<div class="flex h-screen bg-ui-bgSubtle">
-    <!-- Sidebar -->
-    <aside class="w-64 bg-tm-blue text-white flex flex-col">
-        <div class="p-6">
-            <h2 class="text-xl font-bold text-tm-yellow">APIIT Kandy</h2>
-            <p class="text-sm text-tm-gray mt-1">Toastmasters CRM</p>
-        </div>
-        <nav class="flex-1 px-4 py-4 space-y-2">
-            <a href="#" class="block px-4 py-2 rounded hover:bg-ui-primaryHover transition" hx-get="/prospects" hx-target="#main-content">Guests & Prospects</a>
-            <a href="#" class="block px-4 py-2 rounded hover:bg-ui-primaryHover transition" hx-get="/meetings" hx-target="#main-content">Meetings & Attendance</a>
-            <a href="#" class="block px-4 py-2 rounded hover:bg-ui-primaryHover transition" hx-get="/roles" hx-target="#main-content">Role Matrix</a>
-        </nav>
-        <div class="p-4 border-t border-ui-primaryHover">
-            <a href="/logout" class="block w-full text-center px-4 py-2 text-sm bg-ui-accent hover:bg-ui-accentHover rounded transition">Logout</a>
-        </div>
-    </aside>
-
-    <!-- Main Content -->
-    <main class="flex-1 flex flex-col overflow-hidden">
-        <header class="bg-ui-surface border-b border-ui-border shadow-sm p-4 flex justify-between items-center">
-            <h1 class="text-2xl font-semibold text-ui-textMain">Dashboard</h1>
-            <div class="text-sm text-ui-textMuted">Exco Session Active</div>
+        <!-- Dashboard Header -->
+        <header class="bg-white border-b border-gray-200 shadow-sm p-6 flex justify-between items-center">
+            <div>
+                <h1 class="text-[32px] font-bold text-gray-900 tracking-tight gold-underline">Dashboard</h1>
+            </div>
+            <div class="flex items-center space-x-2 bg-green-50 px-3 py-1.5 rounded-full border border-green-200">
+                <span class="relative flex h-3 w-3">
+                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                    <span class="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
+                </span>
+                <span class="text-sm font-medium text-green-700">Welcome, Exco Session Active</span>
+            </div>
         </header>
         
+        <!-- Main Content Area -->
         <div id="main-content" class="p-6 flex-1 overflow-y-auto">
-            <div class="bg-ui-surface border border-ui-border rounded-lg p-6 shadow-sm">
-                <h3 class="text-lg font-semibold text-tm-blue mb-2">Welcome to the CRM</h3>
-                <p class="text-ui-textMuted">Select a module from the sidebar to begin managing guests, meetings, and roles.</p>
+            
+            <!-- 4-Column Metric Grid -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                <!-- Stat Card: Active Members -->
+                <div id="stat-members" hx-swap-oob="true" class="card card-hover hover:border-[#F2A900] p-6 group">
+                    <div class="text-sm font-medium text-slate-500 mb-1 group-hover:text-[#F2A900] transition">Active Members</div>
+                    <div class="text-3xl font-bold text-[#772432]">{{ members_count }}</div>
+                </div>
+                <!-- Stat Card: Total Guests -->
+                <div id="stat-guests" hx-swap-oob="true" class="card card-hover hover:border-[#F2A900] p-6 group">
+                    <div class="text-sm font-medium text-slate-500 mb-1 group-hover:text-[#F2A900] transition">Total Guests</div>
+                    <div class="text-3xl font-bold text-[#772432]">{{ guests_count }}</div>
+                </div>
+                <!-- Stat Card: Prospects -->
+                <div id="stat-prospects" hx-swap-oob="true" class="card card-hover hover:border-[#F2A900] p-6 group">
+                    <div class="text-sm font-medium text-slate-500 mb-1 group-hover:text-[#F2A900] transition">Active Prospects</div>
+                    <div class="text-3xl font-bold text-[#772432]">{{ prospects_count }}</div>
+                </div>
+                <!-- Stat Card: Attendance -->
+                <div id="stat-attendance" hx-swap-oob="true" class="card card-hover hover:border-[#F2A900] p-6 group">
+                    <div class="text-sm font-medium text-slate-500 mb-1 group-hover:text-[#F2A900] transition">Attendance Rate</div>
+                    <div class="text-3xl font-bold text-[#772432]">{{ attendance_rate }}%</div>
+                </div>
+            </div>
+
+            <!-- Content Grid: Main (8) + Sidebar (4) -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                
+                <!-- MAIN COLUMN (Left / 8 cols) -->
+                <div class="lg:col-span-8 space-y-6">
+                    
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <!-- Upcoming Meeting Card -->
+                        <section class="card bg-[#004165] text-white overflow-hidden relative">
+                            <!-- Decorative background element -->
+                            <div class="absolute top-0 right-0 -mr-16 -mt-16 w-64 h-64 rounded-full bg-white opacity-5"></div>
+                            <div class="p-6 relative z-10">
+                                <h2 class="text-[20px] font-semibold mb-4 flex items-center">
+                                    <svg class="w-6 h-6 mr-2 text-[#F2A900]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                                    Upcoming Meeting
+                                </h2>
+                                {% if upcoming_meeting %}
+                                <div class="grid grid-cols-1 gap-4">
+                                    <div>
+                                        <div class="text-[13px] text-blue-200 mb-1">Date & Time</div>
+                                        <div class="font-semibold text-lg bg-[#F2A900] text-[#004165] inline-block px-3 py-1 rounded shadow-sm">
+                                            {{ upcoming_meeting.meeting_date }}
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <div class="text-[13px] text-blue-200 mb-1">Meeting Theme</div>
+                                        <div class="font-semibold text-lg bg-[#F2A900] text-[#004165] inline-block px-3 py-1 rounded shadow-sm">
+                                            {{ upcoming_meeting.theme or 'TBA' }}
+                                        </div>
+                                    </div>
+                                    <div class="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <div class="text-[13px] text-blue-200 mb-1">Toastmaster of the Day</div>
+                                            <div class="font-medium text-lg">{{ upcoming_meeting.tmod }}</div>
+                                        </div>
+                                        <div>
+                                            <div class="text-[13px] text-blue-200 mb-1">Venue</div>
+                                            <div class="font-medium text-lg">{{ upcoming_meeting.venue }}</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% else %}
+                                <p class="text-blue-200">No upcoming meetings scheduled.</p>
+                                {% endif %}
+                            </div>
+                        </section>
+                        
+                        <!-- Quick Actions Panel -->
+                        <div class="card p-6">
+                            <h3 class="text-[20px] font-semibold text-gray-900 mb-4">Quick Actions</h3>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                <button class="btn-primary justify-center w-full" hx-get="/prospects/new" hx-target="#modal-container">
+                                    <i data-lucide="user-plus" class="w-4 h-4"></i> ＋ Add Guest
+                                </button>
+                                <button class="px-4 py-2.5 rounded-lg border border-[#E5E9E8] bg-white text-gray-800 font-semibold text-sm hover:bg-gray-50 hover:-translate-y-0.5 transition-all flex items-center justify-center gap-2" hx-get="/meetings/attendance">
+                                    <i data-lucide="calendar-check" class="w-4 h-4 text-[#004165]"></i> ＋ Record Attendance
+                                </button>
+                                <button class="px-4 py-2.5 rounded-lg border border-[#E5E9E8] bg-white text-gray-800 font-semibold text-sm hover:bg-gray-50 hover:-translate-y-0.5 transition-all flex items-center justify-center gap-2" hx-get="/roles/assign">
+                                    <i data-lucide="award" class="w-4 h-4 text-[#004165]"></i> ＋ Assign Roles
+                                </button>
+                                <button class="px-4 py-2.5 rounded-lg border border-[#E5E9E8] bg-white text-gray-800 font-semibold text-sm hover:bg-gray-50 hover:-translate-y-0.5 transition-all flex items-center justify-center gap-2" hx-get="/meetings/live">
+                                    <i data-lucide="play-circle" class="w-4 h-4 text-[#772432]"></i> ＋ Start Meeting
+                                </button>
+                                <button class="px-4 py-2.5 rounded-lg border border-[#E5E9E8] bg-white text-gray-800 font-semibold text-sm hover:bg-gray-50 hover:-translate-y-0.5 transition-all flex items-center justify-center gap-2 sm:col-span-2" hx-get="/reports/export">
+                                    <i data-lucide="download" class="w-4 h-4 text-gray-600"></i> ＋ Export Report
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Guest Pipeline Table -->
+                    <section class="card card-hover overflow-hidden">
+                        <div class="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
+                            <h2 class="text-[20px] font-semibold text-gray-900">Guest Pipeline</h2>
+                            <div class="flex space-x-2">
+                                <input type="text" placeholder="Search guests..." class="text-sm border border-gray-300 rounded-md px-3 py-1.5 focus:outline-none focus:ring-1 focus:ring-[#004165]">
+                            </div>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-sm text-gray-600">
+                                <thead class="bg-slate-50/80 text-[13px] font-semibold uppercase tracking-[0.08em] text-gray-500 border-b border-slate-200">
+                                    <tr>
+                                        <th class="px-6 py-3">Guest Contact</th>
+                                        <th class="px-6 py-3">Phone</th>
+                                        <th class="px-6 py-3">Joined Date</th>
+                                        <th class="px-6 py-3">Pipeline Stage</th>
+                                        <th class="px-6 py-3">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-gray-100">
+                                    {% for p in pipeline_data %}
+                                    <tr class="hover:bg-slate-50/60 transition-colors">
+                                        <td class="px-6 py-4">
+                                            <div class="flex items-center space-x-3">
+                                                <div class="bg-slate-200 text-slate-700 font-bold text-xs flex items-center justify-center shrink-0 w-9 h-9 rounded-full">
+                                                    {{ p.full_name[:2].upper() }}
+                                                </div>
+                                                <div>
+                                                    <div class="text-slate-900 font-medium text-sm">{{ p.full_name }}</div>
+                                                    <div class="text-slate-500 text-xs">{{ p.email }}</div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td class="px-6 py-4 text-slate-600 text-sm font-mono">{{ p.phone or 'N/A' }}</td>
+                                        <td class="px-6 py-4 text-slate-600 text-sm">{{ p.created_at[:10] if p.created_at else '' }}</td>
+                                        <td class="px-6 py-4">
+                                            <span class="px-2.5 py-1 text-xs rounded-full border font-medium
+                                                {% if p.stage == '1st Visit' %}bg-sky-100 text-sky-800 border-sky-200
+                                                {% elif p.stage == '2nd Visit' %}bg-amber-100 text-amber-800 border-amber-200
+                                                {% elif p.stage == 'Form Sent' %}bg-amber-100 text-amber-800 border-amber-200
+                                                {% elif p.stage == 'Payment Pending' %}bg-amber-100 text-amber-800 border-amber-200
+                                                {% else %}bg-gray-50 text-gray-700 border-gray-200{% endif %}">
+                                                {{ p.stage }}
+                                            </span>
+                                        </td>
+                                        <td class="px-6 py-4">
+                                            <button class="text-slate-400 hover:text-slate-700 transition-colors">
+                                                <i data-lucide="more-horizontal" class="w-4 h-4"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    {% else %}
+                                    <tr>
+                                        <td colspan="5" class="py-12 text-center">
+                                            <div class="flex flex-col items-center justify-center space-y-3">
+                                                <div class="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center text-2xl shadow-inner">
+                                                    📭
+                                                </div>
+                                                <h4 class="text-[18px] font-semibold text-gray-900">No guests yet</h4>
+                                                <p class="text-[14px] text-gray-500 max-w-sm">
+                                                    Invite visitors to your next meeting and record their details to start converting them into members.
+                                                </p>
+                                                <button class="btn-primary mt-2" hx-get="/prospects/new" hx-target="#modal-container">
+                                                    <i data-lucide="user-plus" class="w-4 h-4"></i> ＋ Add Guest
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </section>
+                </div>
+
+                <!-- SIDEBAR (Right / 4 cols) -->
+                <div class="lg:col-span-4 space-y-6">
+                    <!-- Recent Activity Feed -->
+                    <section class="card card-hover p-6 h-full">
+                        <h2 class="text-[20px] font-semibold text-gray-900 mb-6">Recent Activity</h2>
+                        
+                        <div class="space-y-6 relative before:absolute before:inset-0 before:ml-5 before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-gray-200 before:to-transparent">
+                            {% for act in recent_activities %}
+                            <div class="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active">
+                                <div class="flex items-center justify-center w-10 h-10 rounded-full border-2 border-white bg-green-100 text-green-600 shadow shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                                </div>
+                                <div class="w-[calc(100%-4rem)] md:w-[calc(50%-2.5rem)] p-4 rounded-lg border border-gray-200 bg-white shadow-sm hover:shadow-md transition">
+                                    <div class="mb-1 text-sm font-semibold text-gray-900">{{ act.text }}</div>
+                                    <time class="block mb-1 text-xs font-normal text-gray-500">{{ act.parsed_time.strftime('%b %d, %Y - %I:%M %p') if act.parsed_time else act.timestamp }}</time>
+                                </div>
+                            </div>
+                            {% else %}
+                            <div class="text-sm text-gray-500 text-center py-4">No recent activity found.</div>
+                            {% endfor %}
+                        </div>
+                    </section>
+                </div>
+                
             </div>
         </div>
-    </main>
-</div>
 {% endblock %}

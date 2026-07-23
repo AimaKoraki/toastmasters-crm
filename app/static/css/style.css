@@ -1,24 +1,76 @@
 :root {
-  /* Official Brand Standards */
-  --tm-blue: #004165;
-  --tm-maroon: #772432;
-  --tm-gray: #a9b2b1;
-  --tm-yellow: #f2df00;
+    --tm-blue: #004165;
+    --tm-maroon: #772432;
+    --tm-yellow: #F2DF00;
 
-  /* UI/UX System Tweaks */
-  --ui-primary: #004165;
-  --ui-primary-hover: #00314d;
-  
-  --ui-accent: #772432;
-  --ui-accent-hover: #5e1c27;
+    --bg: #F7F9FA;
+    --surface: #FFFFFF;
+    --border: #E5E9E8;
 
-  --ui-surface: #ffffff;
-  --ui-bg-subtle: #f4f6f6;
-  --ui-border: #d1d7d6;
+    --text: #111827;
+    --muted: #6B7280;
 
-  --ui-text-main: #0e1726;
-  --ui-text-muted: #525b5a;
-  
-  --ui-warning-bg: #f2df00;
-  --ui-warning-text: #004165;
+    --success: #16A34A;
+    --warning: #D97706;
+    --danger: #DC2626;
+}
+
+body {
+    background-color: var(--bg);
+    color: var(--text);
+    font-size: 15px;
+}
+
+/* Modern Card Styling */
+.card {
+    background: var(--surface);
+    border-radius: 14px;
+    border: 1px solid var(--border);
+    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.05);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.card-hover:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.08);
+}
+
+/* Primary Button Styling */
+.btn-primary {
+    background: var(--tm-maroon);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 10px 18px;
+    font-weight: 600;
+    font-size: 14px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+.btn-primary:hover {
+    background: #5c1c27;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(119, 36, 50, 0.25);
+}
+
+/* Toastmasters Gold Underline Accent */
+.gold-underline {
+    position: relative;
+    display: inline-block;
+    padding-bottom: 8px;
+}
+
+.gold-underline::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 70px;
+    height: 4px;
+    background-color: var(--tm-yellow);
+    border-radius: 4px;
 }

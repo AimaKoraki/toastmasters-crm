@@ -13,7 +13,7 @@ async def get_meetings(request: Request, user=Depends(get_current_user)):
     if supabase:
         res = supabase.table("meetings").select("*").order("meeting_date", desc=True).execute()
         meetings = res.data
-    return templates.TemplateResponse(request, "partials/meetings.html", {"meetings": meetings})
+    return templates.TemplateResponse(request, "partials/meetings.html", {"meetings": meetings, "active_page": "attendance"})
 
 @router.post("/", response_class=HTMLResponse)
 async def create_meeting(
@@ -36,4 +36,4 @@ async def create_meeting(
         res = supabase.table("meetings").select("*").order("meeting_date", desc=True).execute()
         meetings = res.data
         
-    return templates.TemplateResponse(request, "partials/meetings.html", {"meetings": meetings})
+    return templates.TemplateResponse(request, "partials/meetings.html", {"meetings": meetings, "active_page": "attendance"})

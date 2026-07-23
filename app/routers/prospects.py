@@ -14,7 +14,7 @@ async def get_prospects(request: Request, user=Depends(get_current_user)):
     if supabase:
         response = supabase.table("members").select("*").eq("status", "Prospect").execute()
         prospects = response.data
-    return templates.TemplateResponse(request, "partials/prospects.html", {"prospects": prospects})
+    return templates.TemplateResponse(request, "partials/prospects.html", {"prospects": prospects, "active_page": "guests"})
 
 @router.post("/", response_class=HTMLResponse)
 async def add_prospect(
@@ -43,4 +43,4 @@ async def add_prospect(
         res = supabase.table("members").select("*").eq("status", "Prospect").execute()
         prospects = res.data
 
-    return templates.TemplateResponse(request, "partials/prospects.html", {"prospects": prospects})
+    return templates.TemplateResponse(request, "partials/prospects.html", {"prospects": prospects, "active_page": "guests"})
