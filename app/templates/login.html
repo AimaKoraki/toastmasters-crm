@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+
+{% block title %}Login - Toastmasters CRM{% endblock %}
+
+{% block content %}
+<div class="flex items-center justify-center min-h-screen">
+    <div class="bg-ui-surface p-8 rounded-lg shadow-md border border-ui-border w-96">
+        <div class="text-center mb-6">
+            <h1 class="text-2xl font-bold text-tm-blue">APIIT Kandy Toastmasters</h1>
+            <p class="text-ui-textMuted mt-2">Executive Committee Login</p>
+        </div>
+
+        {% if error %}
+        <div class="bg-ui-warningBg text-ui-warningText p-3 rounded mb-4 text-sm font-semibold">
+            {{ error }}
+        </div>
+        {% endif %}
+
+        <form method="POST" action="/login">
+            <div class="mb-4">
+                <label for="passkey" class="block text-sm font-medium text-ui-textMuted mb-1">Exco Passkey</label>
+                <input type="password" id="passkey" name="passkey" required 
+                       class="w-full px-4 py-2 border border-ui-border rounded focus:outline-none focus:ring-2 focus:ring-ui-primary">
+            </div>
+            <button type="submit" 
+                    class="w-full bg-ui-primary text-white font-semibold py-2 px-4 rounded hover:bg-ui-primaryHover transition duration-200">
+                Log In
+            </button>
+        </form>
+    </div>
+</div>
+{% endblock %}

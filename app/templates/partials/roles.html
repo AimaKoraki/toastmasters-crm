@@ -1,0 +1,62 @@
+<div class="bg-ui-surface border border-ui-border rounded-lg shadow-sm">
+    <div class="p-4 border-b border-ui-border flex justify-between items-center">
+        <h3 class="text-lg font-semibold text-tm-blue">Member Role History Matrix</h3>
+        <button onclick="document.getElementById('assign-role-modal').classList.remove('hidden')" 
+                class="bg-tm-maroon text-white px-4 py-2 rounded text-sm font-semibold hover:bg-ui-accentHover transition">
+            Assign Role
+        </button>
+    </div>
+    <div class="p-0">
+        <!-- A real implementation would dynamically generate columns for roles -->
+        <table class="w-full text-left border-collapse">
+            <thead>
+                <tr class="bg-ui-bgSubtle border-b border-ui-border text-sm text-ui-textMuted uppercase">
+                    <th class="px-4 py-3 font-medium">Member</th>
+                    <th class="px-4 py-3 font-medium text-center">TMOD</th>
+                    <th class="px-4 py-3 font-medium text-center">Speaker</th>
+                    <th class="px-4 py-3 font-medium text-center">Evaluator</th>
+                    <th class="px-4 py-3 font-medium text-center">GE</th>
+                    <th class="px-4 py-3 font-medium text-center">TTM</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in matrix %}
+                <!-- Matrix rows would go here -->
+                {% else %}
+                <tr>
+                    <td colspan="6" class="px-4 py-8 text-center text-ui-textMuted">No role history found. Start assigning roles to members.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Assign Role Modal -->
+<div id="assign-role-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div class="bg-ui-surface p-6 rounded-lg w-96 shadow-xl">
+        <h3 class="text-lg font-bold text-tm-blue mb-4">Assign Role</h3>
+        <form hx-post="/roles/assign" hx-target="#main-content" onsubmit="document.getElementById('assign-role-modal').classList.add('hidden')">
+            <div class="mb-3">
+                <label class="block text-sm text-ui-textMuted mb-1">Meeting ID</label>
+                <input type="number" name="meeting_id" required class="w-full border border-ui-border rounded px-3 py-2">
+            </div>
+            <div class="mb-3">
+                <label class="block text-sm text-ui-textMuted mb-1">Member ID</label>
+                <input type="number" name="member_id" required class="w-full border border-ui-border rounded px-3 py-2">
+            </div>
+            <div class="mb-3">
+                <label class="block text-sm text-ui-textMuted mb-1">Role ID</label>
+                <input type="number" name="role_id" required class="w-full border border-ui-border rounded px-3 py-2">
+            </div>
+            <div class="mb-4">
+                <label class="block text-sm text-ui-textMuted mb-1">Speech Title (Optional)</label>
+                <input type="text" name="speech_title" class="w-full border border-ui-border rounded px-3 py-2">
+            </div>
+            <div class="flex justify-end space-x-2">
+                <button type="button" onclick="document.getElementById('assign-role-modal').classList.add('hidden')" class="px-4 py-2 text-sm text-ui-textMuted hover:bg-ui-bgSubtle rounded">Cancel</button>
+                <button type="submit" class="px-4 py-2 text-sm bg-tm-blue text-white rounded hover:bg-ui-primaryHover">Assign</button>
+            </div>
+        </form>
+    </div>
+</div>

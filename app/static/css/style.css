@@ -1,0 +1,24 @@
+:root {
+  /* Official Brand Standards */
+  --tm-blue: #004165;
+  --tm-maroon: #772432;
+  --tm-gray: #a9b2b1;
+  --tm-yellow: #f2df00;
+
+  /* UI/UX System Tweaks */
+  --ui-primary: #004165;
+  --ui-primary-hover: #00314d;
+  
+  --ui-accent: #772432;
+  --ui-accent-hover: #5e1c27;
+
+  --ui-surface: #ffffff;
+  --ui-bg-subtle: #f4f6f6;
+  --ui-border: #d1d7d6;
+
+  --ui-text-main: #0e1726;
+  --ui-text-muted: #525b5a;
+  
+  --ui-warning-bg: #f2df00;
+  --ui-warning-text: #004165;
+}

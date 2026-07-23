@@ -1,0 +1,62 @@
+<div class="bg-ui-surface border border-ui-border rounded-lg shadow-sm">
+    <div class="p-4 border-b border-ui-border flex justify-between items-center">
+        <h3 class="text-lg font-semibold text-tm-blue">Meetings & Attendance</h3>
+        <button onclick="document.getElementById('add-meeting-modal').classList.remove('hidden')" 
+                class="bg-tm-maroon text-white px-4 py-2 rounded text-sm font-semibold hover:bg-ui-accentHover transition">
+            + New Meeting
+        </button>
+    </div>
+    <div class="p-0">
+        <table class="w-full text-left border-collapse">
+            <thead>
+                <tr class="bg-ui-bgSubtle border-b border-ui-border text-sm text-ui-textMuted uppercase">
+                    <th class="px-4 py-3 font-medium">Meeting #</th>
+                    <th class="px-4 py-3 font-medium">Date</th>
+                    <th class="px-4 py-3 font-medium">Theme</th>
+                    <th class="px-4 py-3 font-medium text-right">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for m in meetings %}
+                <tr class="border-b border-ui-border hover:bg-ui-bgSubtle transition">
+                    <td class="px-4 py-3 font-semibold text-tm-blue">#{{ m.meeting_number }}</td>
+                    <td class="px-4 py-3">{{ m.meeting_date }}</td>
+                    <td class="px-4 py-3 italic">{{ m.theme }}</td>
+                    <td class="px-4 py-3 text-right">
+                        <button class="text-ui-primary hover:underline text-sm font-semibold">Mark Attendance</button>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="4" class="px-4 py-8 text-center text-ui-textMuted">No meetings found. Create a new meeting to begin.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Add Meeting Modal -->
+<div id="add-meeting-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div class="bg-ui-surface p-6 rounded-lg w-96 shadow-xl">
+        <h3 class="text-lg font-bold text-tm-blue mb-4">Create New Meeting</h3>
+        <form hx-post="/meetings" hx-target="#main-content" onsubmit="document.getElementById('add-meeting-modal').classList.add('hidden')">
+            <div class="mb-3">
+                <label class="block text-sm text-ui-textMuted mb-1">Meeting Number</label>
+                <input type="number" name="meeting_number" required class="w-full border border-ui-border rounded px-3 py-2">
+            </div>
+            <div class="mb-3">
+                <label class="block text-sm text-ui-textMuted mb-1">Date</label>
+                <input type="date" name="meeting_date" required class="w-full border border-ui-border rounded px-3 py-2">
+            </div>
+            <div class="mb-4">
+                <label class="block text-sm text-ui-textMuted mb-1">Theme (Optional)</label>
+                <input type="text" name="theme" class="w-full border border-ui-border rounded px-3 py-2">
+            </div>
+            <div class="flex justify-end space-x-2">
+                <button type="button" onclick="document.getElementById('add-meeting-modal').classList.add('hidden')" class="px-4 py-2 text-sm text-ui-textMuted hover:bg-ui-bgSubtle rounded">Cancel</button>
+                <button type="submit" class="px-4 py-2 text-sm bg-tm-blue text-white rounded hover:bg-ui-primaryHover">Save Meeting</button>
+            </div>
+        </form>
+    </div>
+</div>
