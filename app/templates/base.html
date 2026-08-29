@@ -43,6 +43,9 @@
     </script>
 </head>
 <body class="bg-slate-50 text-ui-textMain min-h-screen flex">
+    <!-- Global HTMX Loading Indicator Bar -->
+    <div id="global-progress"></div>
+
     {% if request.session.get("authenticated") %}
 
     <!-- ============================================================ -->
@@ -229,11 +232,107 @@
     <!-- Global Modal Container for HTMX -->
     <div id="modal-container"></div>
 
+    <!-- Global Toast Container -->
+    <div id="toast-container" class="fixed bottom-5 right-5 z-[9999] flex flex-col space-y-3 pointer-events-none max-w-sm w-full px-4 sm:px-0"></div>
+
     <script>
         // ── Lucide icon init ──────────────────────────────────────────
         lucide.createIcons();
         document.body.addEventListener('htmx:afterSettle', function() {
             lucide.createIcons();
+
+            // Trigger any pending toast alerts from partials
+            document.querySelectorAll('.toast-trigger').forEach(el => {
+                const msg = el.getAttribute('data-toast-message');
+                const type = el.getAttribute('data-toast-type') || 'success';
+                if (msg) {
+                    showToast(msg, type);
+                }
+                el.remove();
+            });
+        });
+
+        // ── Global Toast Notification System ───────────────────────────
+        function showToast(message, type = 'success', duration = 4000) {
+            const container = document.getElementById('toast-container');
+            if (!container) return;
+
+            const toast = document.createElement('div');
+            toast.className = 'toast-slide-in pointer-events-auto flex items-start gap-3 p-4 rounded-xl border shadow-xl transition-all duration-300 ' +
+                (type === 'success' ? 'bg-white border-emerald-200 text-slate-800' :
+                 type === 'error'   ? 'bg-white border-rose-200 text-slate-800' :
+                 type === 'warning' ? 'bg-white border-amber-200 text-slate-800' :
+                                      'bg-white border-blue-200 text-slate-800');
+
+            const iconName = type === 'success' ? 'check-circle-2' :
+                             type === 'error'   ? 'alert-circle' :
+                             type === 'warning' ? 'alert-triangle' : 'info';
+
+            const iconColor = type === 'success' ? 'text-emerald-600' :
+                              type === 'error'   ? 'text-rose-600' :
+                              type === 'warning' ? 'text-amber-600' : 'text-blue-600';
+
+            toast.innerHTML = `
+                <div class="shrink-0 mt-0.5 ${iconColor}">
+                    <i data-lucide="${iconName}" class="w-5 h-5"></i>
+                </div>
+                <div class="flex-1 text-sm font-medium leading-5">
+                    ${message}
+                </div>
+                <button type="button" class="shrink-0 text-slate-400 hover:text-slate-600 ml-1 p-0.5" onclick="dismissToast(this.parentElement)">
+                    <i data-lucide="x" class="w-4 h-4"></i>
+                </button>
+            `;
+
+            container.appendChild(toast);
+            lucide.createIcons();
+
+            setTimeout(() => {
+                dismissToast(toast);
+            }, duration);
+        }
+
+        function dismissToast(toastEl) {
+            if (!toastEl || !toastEl.parentElement) return;
+            toastEl.classList.remove('toast-slide-in');
+            toastEl.classList.add('toast-fade-out');
+            setTimeout(() => {
+                if (toastEl.parentElement) toastEl.remove();
+            }, 300);
+        }
+
+        // ── Global HTMX Request Lifecycle & Error Catching ─────────────
+        document.body.addEventListener('htmx:beforeRequest', function() {
+            document.body.classList.add('htmx-request');
+        });
+
+        document.body.addEventListener('htmx:afterRequest', function(evt) {
+            document.body.classList.remove('htmx-request');
+        });
+
+        // Catch backend HTTP errors (400, 422, 500 etc.) and show toast
+        document.body.addEventListener('htmx:responseError', function(evt) {
+            const xhr = evt.detail.xhr;
+            let errorMsg = `Request failed (Status ${xhr.status})`;
+            try {
+                const data = JSON.parse(xhr.responseText);
+                if (data && data.detail) {
+                    if (Array.isArray(data.detail)) {
+                        errorMsg = data.detail.map(d => d.msg || JSON.stringify(d)).join(', ');
+                    } else {
+                        errorMsg = data.detail;
+                    }
+                }
+            } catch (e) {
+                if (xhr.responseText && xhr.responseText.length < 200 && !xhr.responseText.includes('<html')) {
+                    errorMsg = xhr.responseText;
+                }
+            }
+            showToast(errorMsg, 'error', 5000);
+        });
+
+        document.body.addEventListener('htmx:sendError', function() {
+            showToast('Network error: Unable to communicate with the server.', 'error', 5000);
         });
 
         // ── Page title & sidebar active state on HTMX nav ────────────
@@ -321,7 +420,7 @@
                 return;
             }
 
-            // Close CSS hidden-class modals (assign-role-modal, etc.)
+            // Close CSS hidden-class modals (update-stage-modal, etc.)
             document.querySelectorAll('[id$="-modal"]:not(.hidden)').forEach(m => {
                 m.classList.add('hidden');
             });

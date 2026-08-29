@@ -85,3 +85,66 @@ body {
     background-color: var(--brand-accent);
     border-radius: 4px;
 }
+
+/* Global HTMX Loading Bar */
+#global-progress {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #2563eb, #38bdf8, #fbbf24);
+    background-size: 200% 100%;
+    z-index: 99999;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease-in-out;
+}
+
+body.htmx-request #global-progress,
+.htmx-request#global-progress {
+    opacity: 1;
+    animation: htmx-shimmer 1.2s infinite linear;
+}
+
+@keyframes htmx-shimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
+/* Role Matrix Sticky Column Hover Synchronization */
+.matrix-row:hover td {
+    background-color: rgb(248 250 252) !important;
+}
+
+/* Toast Notification Animation */
+.toast-slide-in {
+    animation: toastIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.toast-fade-out {
+    animation: toastOut 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes toastIn {
+    from {
+        opacity: 0;
+        transform: translateY(16px) scale(0.96);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+@keyframes toastOut {
+    from {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+    to {
+        opacity: 0;
+        transform: translateY(10px) scale(0.96);
+    }
+}
+

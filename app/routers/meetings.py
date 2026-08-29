@@ -104,7 +104,8 @@ async def create_meeting(
     context = {
         "request": request,
         "meetings": meetings,
-        "active_page": "attendance"
+        "active_page": "attendance",
+        "success_message": f"Meeting #{meeting_number} scheduled successfully."
     }
     return templates.TemplateResponse(request, "partials/meetings.html", context)
 

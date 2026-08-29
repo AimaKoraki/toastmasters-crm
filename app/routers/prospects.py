@@ -152,7 +152,8 @@ async def add_prospect(
         "prospects": prospects,
         "stages": STAGES,
         "active_stage": "all",
-        "active_page": "guests"
+        "active_page": "guests",
+        "success_message": f"Guest '{full_name.strip()}' registered successfully."
     }
     return templates.TemplateResponse(request, "partials/prospects.html", context)
 
@@ -205,7 +206,8 @@ async def update_prospect_stage(
         "prospects": prospects,
         "stages": STAGES,
         "active_stage": "all",
-        "active_page": "guests"
+        "active_page": "guests",
+        "success_message": f"Pipeline stage successfully updated to '{stage}'."
     }
     return templates.TemplateResponse(request, "partials/prospects.html", context)
 
