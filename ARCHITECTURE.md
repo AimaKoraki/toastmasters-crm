@@ -159,9 +159,10 @@ Browser                     FastAPI (main.py)               Supabase
 #### `roles.py`
 | Method | Path | Status | Description |
 |---|---|---|---|
-| `GET` | `/roles` | ⚠️ Stub | Render role matrix partial (matrix calculation pending) |
-| `POST` | `/roles/assign` | ✅ Complete | Insert `role_assignment` record |
-| `GET` | `/roles/matrix` | ⏳ Pending | Dedicated endpoint for matrix frequency data |
+| `GET` | `/roles` | ✅ Complete | Render dynamic role history frequency matrix partial |
+| `POST` | `/roles/assign` | ✅ Complete | Assign role to member (multi-role supported) |
+| `GET` | `/roles/assign` | ✅ Complete | Render standalone assign role modal partial |
+| `GET` | `/roles/member/{id}/history` | ✅ Complete | Render member role participation timeline modal |
 
 #### `members.py` *(Upcoming)*
 | Method | Path | Status | Description |

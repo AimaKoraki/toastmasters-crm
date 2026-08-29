@@ -1,0 +1,67 @@
+<!-- Member Role History Timeline Modal -->
+<div id="member-role-history-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+    <div class="bg-white p-6 rounded-[16px] w-full max-w-lg shadow-2xl border border-slate-100 transform transition-all max-h-[85vh] flex flex-col">
+        <!-- Header -->
+        <div class="flex justify-between items-center pb-4 border-b border-slate-100 shrink-0">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center font-bold text-sm border border-blue-200">
+                    {{ member.full_name[:2].upper() if member else 'M' }}
+                </div>
+                <div>
+                    <h3 class="text-lg font-bold text-slate-900">{{ member.full_name if member else 'Member Role History' }}</h3>
+                    <p class="text-xs text-slate-500">{{ member.pathway_level or member.status if member else '' }}</p>
+                </div>
+            </div>
+            <button type="button" onclick="document.getElementById('member-role-history-modal').remove()" class="text-slate-400 hover:text-slate-600">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+        </div>
+
+        <!-- Assignments Timeline Body -->
+        <div class="py-4 overflow-y-auto flex-1 space-y-4 pr-1">
+            {% if assignments %}
+            <div class="relative pl-6 space-y-5 before:absolute before:left-2.5 before:top-2 before:bottom-2 before:w-0.5 before:bg-slate-200">
+                {% for a in assignments %}
+                <div class="relative group">
+                    <!-- Dot -->
+                    <div class="absolute -left-6 top-1 w-3.5 h-3.5 rounded-full border-2 border-white 
+                        {% if a.role_catalog and a.role_catalog.category == 'Major' %}bg-blue-600
+                        {% else %}bg-amber-500{% endif %} shadow-sm"></div>
+
+                    <!-- Content Card -->
+                    <div class="bg-slate-50 p-3.5 rounded-xl border border-slate-200/80">
+                        <div class="flex items-center justify-between gap-2 mb-1">
+                            <span class="px-2.5 py-0.5 text-xs font-bold rounded-full border
+                                {% if a.role_catalog and a.role_catalog.category == 'Major' %}bg-blue-100 text-blue-800 border-blue-200
+                                {% else %}bg-amber-100 text-amber-800 border-amber-200{% endif %}">
+                                {{ a.role_catalog.role_name if a.role_catalog else 'Role' }}
+                            </span>
+                            <span class="text-xs font-mono font-semibold text-slate-700">
+                                {% if a.meetings %}Meeting #{{ a.meetings.meeting_number }} ({{ a.meetings.meeting_date }}){% endif %}
+                            </span>
+                        </div>
+                        {% if a.speech_title %}
+                        <div class="text-xs text-slate-800 font-medium mt-1 italic">
+                            Speech: "{{ a.speech_title }}"
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="text-center py-8 text-slate-400 text-sm">
+                No meeting roles assigned to this member yet.
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Footer -->
+        <div class="pt-3 border-t border-slate-100 flex justify-end shrink-0">
+            <button type="button" onclick="document.getElementById('member-role-history-modal').remove()"
+                    class="px-4 py-2 text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-lg transition">
+                Close
+            </button>
+        </div>
+    </div>
+</div>

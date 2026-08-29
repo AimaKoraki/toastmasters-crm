@@ -1,0 +1,69 @@
+<!-- Standalone Assign Role Modal (Loaded via Quick Action or HTMX) -->
+<div id="assign-role-modal-standalone" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+    <div class="bg-white p-6 rounded-[16px] w-full max-w-md shadow-2xl border border-slate-100 transform transition-all">
+        <div class="flex justify-between items-center mb-5 pb-3 border-b border-slate-100">
+            <div class="flex items-center gap-2">
+                <div class="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center">
+                    <i data-lucide="award" class="w-4 h-4"></i>
+                </div>
+                <h3 class="text-lg font-bold text-slate-900">Assign Meeting Role</h3>
+            </div>
+            <button type="button" onclick="document.getElementById('assign-role-modal-standalone').remove()" class="text-slate-400 hover:text-slate-600">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+        </div>
+
+        <form hx-post="/roles/assign" hx-target="#main-content" onsubmit="document.getElementById('assign-role-modal-standalone').remove()">
+            <div class="space-y-4">
+                <!-- Select Meeting -->
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Select Meeting *</label>
+                    <select name="meeting_id" required class="w-full border border-slate-300 rounded-lg px-3.5 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        {% for m in all_meetings %}
+                        <option value="{{ m.id }}">Meeting #{{ m.meeting_number }} ({{ m.meeting_date }}){% if m.theme %} - {{ m.theme }}{% endif %}</option>
+                        {% else %}
+                        <option value="" disabled>No meetings created yet</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Select Member -->
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Select Member *</label>
+                    <select name="member_id" required class="w-full border border-slate-300 rounded-lg px-3.5 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        {% for mem in all_members %}
+                        <option value="{{ mem.id }}">{{ mem.full_name }} ({{ mem.status }})</option>
+                        {% else %}
+                        <option value="" disabled>No members available</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Select Role -->
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Role *</label>
+                    <select name="role_id" required class="w-full border border-slate-300 rounded-lg px-3.5 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        {% for r in all_roles %}
+                        <option value="{{ r.id }}">{{ r.role_name }} ({{ r.category }})</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Optional Speech Title -->
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Speech Title (If Speaker)</label>
+                    <input type="text" name="speech_title" placeholder="e.g. The Power of Vulnerability"
+                           class="w-full border border-slate-300 rounded-lg px-3.5 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition">
+                </div>
+            </div>
+
+            <div class="flex justify-end gap-2 mt-6 pt-4 border-t border-slate-100">
+                <button type="button" onclick="document.getElementById('assign-role-modal-standalone').remove()"
+                        class="px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 rounded-lg transition">Cancel</button>
+                <button type="submit" class="btn-primary">
+                    <i data-lucide="check" class="w-4 h-4"></i> Assign Role
+                </button>
+            </div>
+        </form>
+    </div>
+</div>

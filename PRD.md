@@ -15,7 +15,7 @@ A lightweight, high-speed internal management system built for the Vice Presiden
 | **Module B** | Guest & Prospect Pipeline | ✅ Complete | Guest table view, guest creation endpoint, stage progression (`POST /stage`), auto-onboarding, stage history modal, stage filter tabs | — |
 | **Module C** | Member Management | ⏳ 0% Complete | Data schema defined in `members` table | Router `members.py`, member directory UI, renewal tracker |
 | **Module D** | Meeting & Attendance | ✅ Complete | Meeting creation, meeting list with stats, batch attendance logger (`POST /attendance`), interactive check-in UI | — |
-| **Module E** | Roles & History Matrix | ⚠️ 50% Complete | Role catalog schema, role assignment endpoint | Dynamic frequency matrix computation, multi-select UI |
+| **Module E** | Roles & History Matrix | ✅ Complete | Role catalog, dynamic cross-tabulation frequency matrix, multi-role assignment (`POST /roles/assign`), member role history modal | — |
 | **Module F** | Reports & Exports | ⏳ 0% Complete | Data tables ready | Export router, CSV/PDF generator for logs and matrix |
 
 ---
@@ -119,11 +119,13 @@ Fixed left sidebar (`w-64`) with Lucide icons, categorized into clear operationa
 
 #### Module E: Flexible Role Assignments & History Matrix
 - **Master Catalogue of Club Roles:** Pre-populated standard roles (Meeting Host, Topics Master, General Evaluator, Speaker, Timer, Filler Word Counter, Language Evaluator, etc.). *(✅ Implemented in `SCHEMA.sql`)*
-- **Multi-role Support:** Allow assigning multiple functional roles to a single member in one meeting (e.g., Timer + Filler Word Counter combined). *(Schema supports via composite uniqueness)*
-- **Member Role Frequency Matrix:** View role distribution across meetings to ensure equitable assignments. *(⚠️ Stub implemented, matrix query pending)*
-- **Remaining Deliverables:**
-  - [ ] Calculate matrix aggregating role counts per member across past meetings.
-  - [ ] Replace numeric ID inputs in `partials/roles.html` modal with dynamic `<select>` dropdowns.
+- **Multi-role Support:** Allow assigning multiple functional roles to a single member in one meeting (e.g., Timer + Filler Word Counter combined). *(✅ Implemented via composite uniqueness)*
+- **Member Role Frequency Matrix:** View role distribution across meetings to ensure equitable assignments. *(✅ Implemented)*
+- **Delivered Features:**
+  - [x] Implemented dynamic cross-tabulation frequency matrix in `app/routers/roles.py`.
+  - [x] Replaced numeric ID inputs with dynamic `<select>` dropdowns for meetings, members, and roles in `partials/roles.html`.
+  - [x] Added member role history timeline modal (`GET /roles/member/{id}/history`).
+  - [x] Added category filter tabs (`All Roles`, `Major Roles`, `Functional Roles`) and roster search.
 
 #### Module F: Reports & Exports
 - **CSV & PDF Report Generation:** Export guest conversion rates, meeting attendance logs, and member role participation history. *(⏳ Pending)*

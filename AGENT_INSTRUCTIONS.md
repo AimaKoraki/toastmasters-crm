@@ -11,7 +11,7 @@
 | **Phase 2: Core Dashboard & Metrics** | ✅ Complete | 95% |
 | **Phase 3: Guest & Prospect Pipeline** | ✅ Complete | 100% |
 | **Phase 4: Meeting & Attendance Tracking** | ✅ Complete | 100% |
-| **Phase 5: Role Assignments & Matrix** | ⚠️ In Progress | 50% |
+| **Phase 5: Role Assignments & Matrix** | ✅ Complete | 100% |
 | **Phase 6: Member Management Module** | ⏳ Pending | 0% |
 | **Phase 7: Reports & Exports** | ⏳ Pending | 0% |
 
@@ -45,6 +45,7 @@
     - [x] Guest pipeline summary table with avatar initials and matching stage badges
     - [x] Quick Action `＋ Add Guest` linked via HTMX to `/prospects/new` modal
     - [x] Quick Action `＋ Record Attendance` linked via HTMX to `/meetings/attendance` check-in view
+    - [x] Quick Action `＋ Assign Roles` linked via HTMX to `/roles/assign` modal
 
 - [x] **Step 5: Design Tokens & Styling**
   - [x] Tailwind CSS CDN integration with custom color scheme
@@ -73,12 +74,13 @@
   - [x] Segmented radio buttons per member row with bulk actions ("All Present", "All Absent", "All Excused")
   - [x] Live roster search filtering
 
-- [x] **Step 8: Role Assignments Core**
-  - [x] `GET /roles`: Renders role matrix partial (`app/templates/partials/roles.html`)
-  - [x] `POST /roles/assign`: Assigns role to member for a meeting (`meeting_id`, `member_id`, `role_id`, `speech_title`)
-  - [ ] Calculate member role frequency matrix dynamically in `app/routers/roles.py`
-  - [ ] Role assignment modal improvements (dropdown selects for meeting, member, and role from catalog instead of raw IDs)
-  - [ ] Multi-role assignment support in UI (e.g. Timer + Filler Word Counter)
+- [x] **Step 8: Role Assignments & History Matrix (Module E)**
+  - [x] `GET /roles`: Dynamic cross-tabulation matrix with heatmap frequency counters and category filter tabs (`app/templates/partials/roles.html`)
+  - [x] `GET /roles/assign`: Standalone modal with friendly dropdowns for meetings, members, and roles (`app/templates/partials/role_assign_modal.html`)
+  - [x] `POST /roles/assign`: Inserts `(meeting_id, member_id, role_id, speech_title)` into `role_assignments` with multi-role support
+  - [x] `GET /roles/member/{member_id}/history`: Member role participation timeline modal (`app/templates/partials/member_role_history_modal.html`)
+  - [x] Role matrix search filter and category filtering (`All`, `Major`, `Functional`)
+  - [x] Heatmap count badges (soft gray for 0, subtle blue for 1-2, gold for 3+)
 
 - [ ] **Step 9: Dedicated Member Management Module**
   - [ ] `app/routers/members.py` (`GET /members`, `POST /members`, `GET /members/{id}`)
@@ -89,7 +91,7 @@
 - [ ] **Step 10: Quick Action Wiring & Modal Unification**
   - [x] `＋ Add Guest` (wired to `/prospects/new` modal container)
   - [x] `＋ Record Attendance` (wired to `/meetings/attendance` check-in view)
-  - [ ] `＋ Assign Roles` (wire to role assignment modal)
+  - [x] `＋ Assign Roles` (wired to `/roles/assign` modal container)
   - [ ] `＋ Start Meeting` / Meeting Live Mode
   - [ ] `＋ Export Report`
 
@@ -104,7 +106,6 @@
 
 ### Immediate Next Tasks (Priority Order)
 
-1. **Compute Role Frequency Matrix:** Implement dynamic matrix generation in `app/routers/roles.py` and replace raw ID inputs in modal with dropdown selects.
-2. **Implement Members Router & View:** Add `app/routers/members.py` and `app/templates/partials/members.html` with status filtering (`Active`, `Inactive`, `Alumni`) and renewal tracking.
-3. **Wire Remaining Quick Actions:** Complete HTMX bindings for remaining dashboard buttons (`＋ Assign Roles`, `＋ Start Meeting`, `＋ Export Report`).
-4. **Reports & Exports Module:** Implement `app/routers/reports.py` with CSV export functionality.
+1. **Implement Members Router & View:** Add `app/routers/members.py` and `app/templates/partials/members.html` with status filtering (`Active`, `Inactive`, `Alumni`) and renewal tracking.
+2. **Reports & Exports Module:** Implement `app/routers/reports.py` with CSV export functionality.
+3. **Wire Remaining Dashboard Quick Actions:** `＋ Start Meeting` & `＋ Export Report`.
