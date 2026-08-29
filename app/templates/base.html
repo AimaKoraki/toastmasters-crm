@@ -105,7 +105,7 @@
                         <i data-lucide="grid" class="w-5 h-5 mr-3 inline-block"></i>
                         Role Matrix
                     </a>
-                    <a href="#" class="flex items-center px-3 py-2 text-sm rounded-lg transition-all text-slate-300 hover:text-white hover:bg-[#1e293b]/50 {% if active_page == 'reports' %}bg-[#2563eb] text-white font-semibold{% endif %}">
+                    <a href="#" hx-get="/reports" hx-target="#main-content" class="flex items-center px-3 py-2 text-sm rounded-lg transition-all text-slate-300 hover:text-white hover:bg-[#1e293b]/50 {% if active_page == 'reports' %}bg-[#2563eb] text-white font-semibold{% endif %}">
                         <i data-lucide="bar-chart-3" class="w-5 h-5 mr-3 inline-block"></i>
                         Reports
                     </a>

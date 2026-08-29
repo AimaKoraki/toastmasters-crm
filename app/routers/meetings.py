@@ -238,3 +238,59 @@ async def save_batch_attendance(request: Request, user=Depends(get_current_user)
         "active_page": "attendance"
     }
     return templates.TemplateResponse(request, "partials/meetings.html", context)
+
+
+@router.get("/meetings/live", response_class=HTMLResponse)
+@router.get("/meetings/{meeting_id}/live", response_class=HTMLResponse)
+async def get_live_meeting_console(request: Request, meeting_id: int = None, user=Depends(get_current_user)):
+    """
+    Renders the Live Meeting Console for meeting day operations.
+    Loads active meeting, assigned roles & speeches, and live attendance metrics.
+    """
+    meeting = None
+    assigned_roles = []
+    attendance_stats = {"present": 0, "absent": 0, "excused": 0, "guest": 0, "total": 0}
+
+    if supabase:
+        try:
+            # 1. Fetch meeting
+            if meeting_id:
+                m_res = supabase.table("meetings").select("*").eq("id", meeting_id).execute()
+            else:
+                m_res = supabase.table("meetings").select("*").order("meeting_date", desc=True).limit(1).execute()
+            
+            if m_res.data:
+                meeting = m_res.data[0]
+                mid = meeting["id"]
+
+                # 2. Fetch assigned roles
+                roles_res = supabase.table("role_assignments").select(
+                    "id, speech_title, role_catalog(role_name, category), members(id, full_name, email, status)"
+                ).eq("meeting_id", mid).execute()
+                assigned_roles = roles_res.data or []
+
+                # 3. Fetch attendance stats
+                att_res = supabase.table("attendance").select("status").eq("meeting_id", mid).execute()
+                for a in (att_res.data or []):
+                    st = a.get("status")
+                    if st == "Present":
+                        attendance_stats["present"] += 1
+                    elif st == "Absent":
+                        attendance_stats["absent"] += 1
+                    elif st == "Excused":
+                        attendance_stats["excused"] += 1
+                    elif st == "Guest":
+                        attendance_stats["guest"] += 1
+                    attendance_stats["total"] += 1
+
+        except Exception as e:
+            print(f"Error fetching live meeting console: {e}")
+
+    context = {
+        "request": request,
+        "meeting": meeting,
+        "assigned_roles": assigned_roles,
+        "attendance_stats": attendance_stats,
+        "active_page": "agenda"
+    }
+    return templates.TemplateResponse(request, "partials/live_meeting.html", context)

@@ -154,6 +154,7 @@ Browser                     FastAPI (main.py)               Supabase
 | `GET` | `/meetings/{id}/attendance` | ✅ Complete | Render batch attendance check-in matrix view |
 | `GET` | `/meetings/attendance` | ✅ Complete | Quick action helper for latest meeting attendance |
 | `GET` | `/meetings/new` | ✅ Complete | Render standalone Add Meeting modal partial |
+| `GET` | `/meetings/live` | ✅ Complete | Render Live Meeting Mode console partial |
 | `POST` | `/attendance` | ✅ Complete | Batch-record attendance statuses for a meeting |
 
 #### `roles.py`
@@ -164,18 +165,19 @@ Browser                     FastAPI (main.py)               Supabase
 | `GET` | `/roles/assign` | ✅ Complete | Render standalone assign role modal partial |
 | `GET` | `/roles/member/{id}/history` | ✅ Complete | Render member role participation timeline modal |
 
+#### `reports.py`
+| Method | Path | Status | Description |
+|---|---|---|---|
+| `GET` | `/reports` | ✅ Complete | Render reports overview page partial |
+| `GET` | `/reports/export` | ✅ Complete | Render standalone export report modal partial |
+| `GET` | `/reports/download` | ✅ Complete | Stream CSV export of attendance, guests, roles, or summary |
+
 #### `members.py` *(Upcoming)*
 | Method | Path | Status | Description |
 |---|---|---|---|
 | `GET` | `/members` | ⏳ Pending | Render member directory partial with status filter |
 | `POST` | `/members` | ⏳ Pending | Add / edit member record |
 | `GET` | `/members/{id}` | ⏳ Pending | Member detail & Pathways profile view |
-
-#### `reports.py` *(Upcoming)*
-| Method | Path | Status | Description |
-|---|---|---|---|
-| `GET` | `/reports` | ⏳ Pending | Render reports overview page |
-| `GET` | `/reports/export` | ⏳ Pending | Stream CSV export of attendance/guests/roles |
 
 ---
 

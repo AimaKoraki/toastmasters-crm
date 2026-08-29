@@ -1,15 +1,17 @@
 from fastapi import FastAPI, Request
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+import os
 from starlette.middleware.sessions import SessionMiddleware
-from app.routers import auth, prospects, meetings, roles
+from app.routers import auth, prospects, meetings, roles, reports
 from app.dependencies import get_current_user
 from fastapi import Depends
 
 app = FastAPI(title="Club CRM")
 
 # Add Session Middleware
-app.add_middleware(SessionMiddleware, secret_key="super-secret-exco-key")
+session_secret = os.getenv("SESSION_SECRET", "super-secret-exco-key")
+app.add_middleware(SessionMiddleware, secret_key=session_secret)
 
 # Static and Templates
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
@@ -20,6 +22,7 @@ app.include_router(auth.router)
 app.include_router(prospects.router)
 app.include_router(meetings.router)
 app.include_router(roles.router)
+app.include_router(reports.router)
 
 @app.get("/")
 def read_root(request: Request, user=Depends(get_current_user)):

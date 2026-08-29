@@ -1,0 +1,94 @@
+<div class="space-y-6">
+    <!-- Header -->
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-6 rounded-[14px] border border-[#E5E9E8] shadow-sm">
+        <div>
+            <div class="flex items-center gap-3">
+                <h2 class="text-[24px] font-bold text-gray-900 tracking-tight">Club Analytics &amp; Reports</h2>
+                <span class="px-2.5 py-0.5 text-xs font-semibold rounded-full bg-blue-50 text-blue-700 border border-blue-200">
+                    Live Data
+                </span>
+            </div>
+            <p class="text-sm text-slate-500 mt-1">
+                Generate and export data reports for guest pipelines, meeting attendance, and member role participation.
+            </p>
+        </div>
+        <button onclick="document.getElementById('export-report-modal').classList.remove('hidden')" 
+                class="btn-primary shrink-0 shadow-sm hover:shadow" hx-get="/reports/export" hx-target="#modal-container">
+            <i data-lucide="download" class="w-4 h-4"></i> ＋ Export Data
+        </button>
+    </div>
+
+    <!-- 4 KPI Stat Cards -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div class="card p-6">
+            <div class="text-sm font-medium text-slate-500 mb-1">Active Members</div>
+            <div class="text-3xl font-bold text-[#2563eb]">{{ total_members }}</div>
+        </div>
+        <div class="card p-6">
+            <div class="text-sm font-medium text-slate-500 mb-1">Prospects &amp; Guests</div>
+            <div class="text-3xl font-bold text-[#2563eb]">{{ total_guests }}</div>
+        </div>
+        <div class="card p-6">
+            <div class="text-sm font-medium text-slate-500 mb-1">Meetings Held</div>
+            <div class="text-3xl font-bold text-[#2563eb]">{{ total_meetings }}</div>
+        </div>
+        <div class="card p-6">
+            <div class="text-sm font-medium text-slate-500 mb-1">Attendance Records</div>
+            <div class="text-3xl font-bold text-[#2563eb]">{{ total_attendance }}</div>
+        </div>
+    </div>
+
+    <!-- Export Report Cards Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <!-- Card 1: Attendance Logs -->
+        <div class="card p-6 flex flex-col justify-between space-y-4">
+            <div>
+                <div class="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center mb-3">
+                    <i data-lucide="calendar-check" class="w-5 h-5"></i>
+                </div>
+                <h3 class="text-base font-bold text-slate-900">Meeting Attendance</h3>
+                <p class="text-xs text-slate-500 mt-1 leading-relaxed">
+                    Full history of member and visitor attendance across all scheduled club meetings.
+                </p>
+            </div>
+            <a href="/reports/download?report_type=attendance" target="_blank"
+               class="btn-primary justify-center text-xs w-full">
+                <i data-lucide="download" class="w-4 h-4"></i> Download CSV
+            </a>
+        </div>
+
+        <!-- Card 2: Guest Pipeline -->
+        <div class="card p-6 flex flex-col justify-between space-y-4">
+            <div>
+                <div class="w-10 h-10 rounded-xl bg-sky-50 text-sky-600 flex items-center justify-center mb-3">
+                    <i data-lucide="user-plus" class="w-5 h-5"></i>
+                </div>
+                <h3 class="text-base font-bold text-slate-900">Guest Pipeline</h3>
+                <p class="text-xs text-slate-500 mt-1 leading-relaxed">
+                    Visitor details, active conversion stages, progression notes, and onboarding history.
+                </p>
+            </div>
+            <a href="/reports/download?report_type=prospects" target="_blank"
+               class="btn-primary justify-center text-xs w-full">
+                <i data-lucide="download" class="w-4 h-4"></i> Download CSV
+            </a>
+        </div>
+
+        <!-- Card 3: Role Participation -->
+        <div class="card p-6 flex flex-col justify-between space-y-4">
+            <div>
+                <div class="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center mb-3">
+                    <i data-lucide="award" class="w-5 h-5"></i>
+                </div>
+                <h3 class="text-base font-bold text-slate-900">Role Assignments</h3>
+                <p class="text-xs text-slate-500 mt-1 leading-relaxed">
+                    Meeting role distribution, speech titles, and role frequency participation matrix.
+                </p>
+            </div>
+            <a href="/reports/download?report_type=roles" target="_blank"
+               class="btn-primary justify-center text-xs w-full">
+                <i data-lucide="download" class="w-4 h-4"></i> Download CSV
+            </a>
+        </div>
+    </div>
+</div>

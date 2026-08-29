@@ -8,12 +8,12 @@
 | Phase / Milestone | Status | Completion % |
 |---|---|---|
 | **Phase 1: Foundation & Auth** | ✅ Complete | 100% |
-| **Phase 2: Core Dashboard & Metrics** | ✅ Complete | 95% |
+| **Phase 2: Core Dashboard & Metrics** | ✅ Complete | 100% |
 | **Phase 3: Guest & Prospect Pipeline** | ✅ Complete | 100% |
 | **Phase 4: Meeting & Attendance Tracking** | ✅ Complete | 100% |
 | **Phase 5: Role Assignments & Matrix** | ✅ Complete | 100% |
 | **Phase 6: Member Management Module** | ⏳ Pending | 0% |
-| **Phase 7: Reports & Exports** | ⏳ Pending | 0% |
+| **Phase 7: Reports & Exports** | ✅ Complete | 100% |
 
 ---
 
@@ -26,7 +26,7 @@
   - [x] `SCHEMA.sql` database schema definition (PostgreSQL / Supabase)
 
 - [x] **Step 2: Authentication & Session Security**
-  - [x] Starlette `SessionMiddleware` configuration in `app/main.py`
+  - [x] Starlette `SessionMiddleware` configuration in `app/main.py` with dynamic `SESSION_SECRET` binding
   - [x] Passkey verification login flow in `app/routers/auth.py` (`GET /login`, `POST /login`, `GET /logout`)
   - [x] Route protection dependency in `app/dependencies.py` (`get_current_user` with HTMX 401 `HX-Redirect` and standard 303 redirect)
   - [x] Branded split-screen login page (`app/templates/login.html`)
@@ -43,9 +43,6 @@
     - [x] Upcoming meeting hero card (dynamic host & date resolution)
     - [x] Real-time activity timeline feed aggregating `prospect_logs`, `attendance`, and `role_assignments`
     - [x] Guest pipeline summary table with avatar initials and matching stage badges
-    - [x] Quick Action `＋ Add Guest` linked via HTMX to `/prospects/new` modal
-    - [x] Quick Action `＋ Record Attendance` linked via HTMX to `/meetings/attendance` check-in view
-    - [x] Quick Action `＋ Assign Roles` linked via HTMX to `/roles/assign` modal
 
 - [x] **Step 5: Design Tokens & Styling**
   - [x] Tailwind CSS CDN integration with custom color scheme
@@ -82,30 +79,32 @@
   - [x] Role matrix search filter and category filtering (`All`, `Major`, `Functional`)
   - [x] Heatmap count badges (soft gray for 0, subtle blue for 1-2, gold for 3+)
 
-- [ ] **Step 9: Dedicated Member Management Module**
+- [x] **Step 9: Dashboard Quick Action Wiring (All 5 Actions Operational)**
+  - [x] `＋ Add Guest` (wired to `/prospects/new` modal container)
+  - [x] `＋ Record Attendance` (wired to `/meetings/attendance` batch check-in view)
+  - [x] `＋ Assign Roles` (wired to `/roles/assign` modal container)
+  - [x] `＋ Start Meeting` (wired to `/meetings/live` Live Meeting Console)
+  - [x] `＋ Export Report` (wired to `/reports/export` modal container)
+
+- [x] **Step 10: Reports & Data Exports (Module F)**
+  - [x] `app/routers/reports.py` registered in `main.py`
+  - [x] `GET /reports`: Renders full analytics dashboard (`app/templates/partials/reports.html`)
+  - [x] `GET /reports/export`: Renders export modal (`app/templates/partials/export_modal.html`)
+  - [x] `GET /reports/download`: Streaming CSV export for:
+    - [x] Meeting attendance logs
+    - [x] Guest & prospect pipeline conversion data
+    - [x] Member role participation history
+    - [x] Overall club KPI summary
+  - [x] Sidebar `Reports` nav link wired via HTMX
+
+- [ ] **Step 11: Dedicated Member Management Module**
   - [ ] `app/routers/members.py` (`GET /members`, `POST /members`, `GET /members/{id}`)
   - [ ] Member directory partial (`app/templates/partials/members.html`) with status filters (`Active`, `Inactive`, `Alumni`)
   - [ ] Semi-annual renewal cycle tracker (March / September)
   - [ ] Pathways level management and progress tracking
 
-- [ ] **Step 10: Quick Action Wiring & Modal Unification**
-  - [x] `＋ Add Guest` (wired to `/prospects/new` modal container)
-  - [x] `＋ Record Attendance` (wired to `/meetings/attendance` check-in view)
-  - [x] `＋ Assign Roles` (wired to `/roles/assign` modal container)
-  - [ ] `＋ Start Meeting` / Meeting Live Mode
-  - [ ] `＋ Export Report`
-
-- [ ] **Step 11: Reports & Data Exports**
-  - [ ] `app/routers/reports.py` (`GET /reports`, `GET /reports/export`)
-  - [ ] CSV/Excel export for:
-    - [ ] Guest conversion rate & pipeline velocity
-    - [ ] Meeting attendance logs
-    - [ ] Member role participation history matrix
-
 ---
 
 ### Immediate Next Tasks (Priority Order)
 
-1. **Implement Members Router & View:** Add `app/routers/members.py` and `app/templates/partials/members.html` with status filtering (`Active`, `Inactive`, `Alumni`) and renewal tracking.
-2. **Reports & Exports Module:** Implement `app/routers/reports.py` with CSV export functionality.
-3. **Wire Remaining Dashboard Quick Actions:** `＋ Start Meeting` & `＋ Export Report`.
+1. **Implement Dedicated Member Management Module (Module C):** Add `app/routers/members.py` and `app/templates/partials/members.html` with status filtering (`Active`, `Inactive`, `Alumni`), renewal cycle tracking, and member profile view.

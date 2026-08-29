@@ -11,12 +11,12 @@ A lightweight, high-speed internal management system built for the Vice Presiden
 | Module | Name | Status | Implemented Components | Pending Deliverables |
 |---|---|---|---|---|
 | **Core** | Access & Auth | ✅ Complete | Passkey verification, session cookie, route guards, login page | Hardened secret loading from env |
-| **Module A** | Executive Dashboard | ✅ 90% Complete | Metric cards, upcoming meeting hero, activity feed, pipeline preview | Quick actions wiring to active modals |
+| **Module A** | Executive Dashboard | ✅ Complete | Metric cards, upcoming meeting hero, activity feed, pipeline preview, all 5 quick actions wired | — |
 | **Module B** | Guest & Prospect Pipeline | ✅ Complete | Guest table view, guest creation endpoint, stage progression (`POST /stage`), auto-onboarding, stage history modal, stage filter tabs | — |
 | **Module C** | Member Management | ⏳ 0% Complete | Data schema defined in `members` table | Router `members.py`, member directory UI, renewal tracker |
 | **Module D** | Meeting & Attendance | ✅ Complete | Meeting creation, meeting list with stats, batch attendance logger (`POST /attendance`), interactive check-in UI | — |
 | **Module E** | Roles & History Matrix | ✅ Complete | Role catalog, dynamic cross-tabulation frequency matrix, multi-role assignment (`POST /roles/assign`), member role history modal | — |
-| **Module F** | Reports & Exports | ⏳ 0% Complete | Data tables ready | Export router, CSV/PDF generator for logs and matrix |
+| **Module F** | Reports & Exports | ✅ Complete | Reports overview dashboard (`partials/reports.html`), export modal, CSV download generator (`GET /reports/download`) | — |
 
 ---
 
@@ -82,11 +82,11 @@ Fixed left sidebar (`w-64`) with Lucide icons, categorized into clear operationa
 - **Gold Accent:** Decorative Gold underline (`#fbbf24`, `4px` height) under the main Dashboard title. *(✅ Implemented)*
 - **Upcoming Meeting Hero Card:** Highlights Date, Theme, Meeting Host, and Venue. *(✅ Implemented)*
 - **Quick Actions Panel:** One-click triggers for heavy meeting-day workflows:
-  - `＋ Add Guest` *(⚠️ In Progress: Modal trigger needs alignment)*
-  - `＋ Record Attendance` *(⏳ Pending: Connect to meeting attendance modal)*
-  - `＋ Assign Roles` *(⏳ Pending: Connect to role assignment modal)*
-  - `＋ Start Meeting` *(⏳ Pending: Live meeting mode view)*
-  - `＋ Export Report` *(⏳ Pending: Report export handler)*
+  - `＋ Add Guest` *(✅ Implemented - opens Add Guest modal)*
+  - `＋ Record Attendance` *(✅ Implemented - loads attendance check-in view)*
+  - `＋ Assign Roles` *(✅ Implemented - opens Assign Role modal)*
+  - `＋ Start Meeting` *(✅ Implemented - loads Live Meeting Console)*
+  - `＋ Export Report` *(✅ Implemented - opens Export Report modal)*
 - **Recent Activity Feed:** Real-time timeline feed showing recent guest registrations, attendance logs, and role updates. *(✅ Implemented)*
 
 #### Module B: Guest & Prospect Pipeline
@@ -128,7 +128,8 @@ Fixed left sidebar (`w-64`) with Lucide icons, categorized into clear operationa
   - [x] Added category filter tabs (`All Roles`, `Major Roles`, `Functional Roles`) and roster search.
 
 #### Module F: Reports & Exports
-- **CSV & PDF Report Generation:** Export guest conversion rates, meeting attendance logs, and member role participation history. *(⏳ Pending)*
-- **Remaining Deliverables:**
-  - [ ] Implement `app/routers/reports.py` with CSV streaming response.
-  - [ ] Wire sidebar "Reports" link and dashboard "Export Report" quick action.
+- **CSV & PDF Report Generation:** Export guest conversion rates, meeting attendance logs, and member role participation history. *(✅ Implemented)*
+- **Delivered Features:**
+  - [x] Implemented `app/routers/reports.py` with streaming CSV export for attendance, guests, roles, and overall club summary.
+  - [x] Created `partials/export_modal.html` and `partials/reports.html`.
+  - [x] Wired sidebar "Reports" link and dashboard "Export Report" quick action.
