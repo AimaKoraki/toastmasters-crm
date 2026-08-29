@@ -25,6 +25,11 @@ app.include_router(roles.router)
 app.include_router(reports.router)
 app.include_router(members.router, prefix="/members", tags=["members"])
 
+@app.get("/healthz", tags=["health"])
+def health_check():
+    """Lightweight probe endpoint for cloud load balancers and uptime monitoring."""
+    return {"status": "ok", "app": "APIIT Kandy Club CRM"}
+
 @app.get("/")
 def read_root(request: Request, user=Depends(get_current_user)):
     # Initialize variables with defaults

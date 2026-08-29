@@ -4,7 +4,13 @@ import traceback
 
 try:
     client = TestClient(app)
-    
+
+    print("Testing GET /healthz")
+    res_health = client.get("/healthz")
+    assert res_health.status_code == 200
+    assert res_health.json().get("status") == "ok"
+    print("Status: 200 (OK)")
+
     print("Testing GET /login")
     response = client.get("/login")
     print("Status:", response.status_code)
