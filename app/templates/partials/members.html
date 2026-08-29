@@ -94,11 +94,14 @@
             </button>
         </div>
 
-        <!-- Search Bar -->
+        <!-- Search Bar with Clear Button -->
         <div class="relative w-full md:w-64">
             <i data-lucide="search" class="w-4 h-4 absolute left-3 top-2.5 text-slate-400"></i>
-            <input type="text" id="member-search" onkeyup="filterMemberTable()" placeholder="Search members..."
-                   class="w-full pl-9 pr-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:bg-white transition">
+            <input type="text" id="member-search" oninput="handleMemberSearch(this)" placeholder="Filter members..."
+                   class="w-full pl-9 pr-8 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:bg-white transition">
+            <button type="button" id="member-search-clear" onclick="clearMemberSearch()" class="hidden absolute right-2.5 top-2 text-slate-400 hover:text-slate-600 p-0.5" title="Clear filter">
+                <i data-lucide="x" class="w-3.5 h-3.5"></i>
+            </button>
         </div>
     </div>
 
@@ -106,13 +109,23 @@
     <div class="card overflow-hidden">
         <div class="overflow-x-auto">
             <table class="w-full text-left text-sm text-gray-600" id="members-table">
-                <thead class="bg-slate-50 text-[13px] font-semibold uppercase tracking-[0.08em] text-slate-500 border-b border-slate-200">
+                <thead class="bg-slate-50 text-[13px] font-semibold uppercase tracking-[0.08em] text-slate-500 border-b border-slate-200 select-none">
                     <tr>
-                        <th class="px-6 py-3.5">Member Details</th>
-                        <th class="px-6 py-3.5">Phone / Contact</th>
-                        <th class="px-6 py-3.5">Status</th>
-                        <th class="px-6 py-3.5">Pathways Progress</th>
-                        <th class="px-6 py-3.5">Dues Renewal</th>
+                        <th class="px-6 py-3.5 cursor-pointer hover:bg-slate-100/80 transition group" onclick="sortTable('members-table', 0, 'string')">
+                            <span class="inline-flex items-center gap-1">Member Details <span class="sort-icon text-slate-300 group-hover:text-slate-500 text-xs">↕</span></span>
+                        </th>
+                        <th class="px-6 py-3.5 cursor-pointer hover:bg-slate-100/80 transition group" onclick="sortTable('members-table', 1, 'string')">
+                            <span class="inline-flex items-center gap-1">Phone / WhatsApp <span class="sort-icon text-slate-300 group-hover:text-slate-500 text-xs">↕</span></span>
+                        </th>
+                        <th class="px-6 py-3.5 cursor-pointer hover:bg-slate-100/80 transition group" onclick="sortTable('members-table', 2, 'string')">
+                            <span class="inline-flex items-center gap-1">Status <span class="sort-icon text-slate-300 group-hover:text-slate-500 text-xs">↕</span></span>
+                        </th>
+                        <th class="px-6 py-3.5 cursor-pointer hover:bg-slate-100/80 transition group" onclick="sortTable('members-table', 3, 'string')">
+                            <span class="inline-flex items-center gap-1">Pathways Progress <span class="sort-icon text-slate-300 group-hover:text-slate-500 text-xs">↕</span></span>
+                        </th>
+                        <th class="px-6 py-3.5 cursor-pointer hover:bg-slate-100/80 transition group" onclick="sortTable('members-table', 4, 'number')">
+                            <span class="inline-flex items-center gap-1">Dues Renewal <span class="sort-icon text-slate-300 group-hover:text-slate-500 text-xs">↕</span></span>
+                        </th>
                         <th class="px-6 py-3.5 text-right">Actions</th>
                     </tr>
                 </thead>
@@ -120,7 +133,7 @@
                     {% for m in members %}
                     <tr class="hover:bg-slate-50/70 transition-colors member-row">
                         <!-- Member Name & Avatar -->
-                        <td class="px-6 py-4">
+                        <td class="px-6 py-4" data-sort-val="{{ m.full_name }}">
                             <div class="flex items-center space-x-3">
                                 <div class="w-9 h-9 rounded-full bg-slate-100 text-slate-700 font-bold text-xs flex items-center justify-center shrink-0 border border-slate-200 shadow-sm">
                                     {{ m.full_name[:2].upper() }}
@@ -128,20 +141,41 @@
                                 <div>
                                     <div class="text-slate-900 font-semibold text-sm member-name">{{ m.full_name }}</div>
                                     <div class="text-slate-500 text-xs flex items-center gap-1 mt-0.5">
-                                        <i data-lucide="mail" class="w-3 h-3 text-slate-400"></i>
-                                        <span>{{ m.email }}</span>
+                                        <a href="mailto:{{ m.email }}?subject=APIIT%20Kandy%20Toastmasters%20-%20Club%20Update"
+                                           title="Send email to {{ m.email }}"
+                                           class="text-slate-400 hover:text-blue-600 hover:underline flex items-center gap-1 transition">
+                                            <i data-lucide="mail" class="w-3 h-3 text-slate-400"></i>
+                                            <span>{{ m.email }}</span>
+                                        </a>
                                     </div>
                                 </div>
                             </div>
                         </td>
 
-                        <!-- Phone / Contact -->
-                        <td class="px-6 py-4 text-slate-600 text-xs font-mono">
-                            {{ m.phone or '—' }}
+                        <!-- Phone & 1-Click WhatsApp / Call -->
+                        <td class="px-6 py-4 text-slate-600 text-xs font-mono" data-sort-val="{{ m.phone or '' }}">
+                            {% if m.phone %}
+                            <div class="flex items-center gap-2">
+                                <span class="font-medium text-slate-800">{{ m.phone }}</span>
+                                <div class="flex items-center gap-1 shrink-0">
+                                    <button type="button" onclick="openWhatsAppOutreach('{{ m.phone }}', '{{ m.full_name }}', '{{ m.status }}')"
+                                            title="Chat with {{ m.full_name }} on WhatsApp"
+                                            class="inline-flex items-center justify-center w-6 h-6 rounded-md bg-emerald-50 text-emerald-600 hover:bg-emerald-600 hover:text-white border border-emerald-200 transition shadow-2xs">
+                                        <i data-lucide="message-circle" class="w-3.5 h-3.5"></i>
+                                    </button>
+                                    <a href="tel:{{ m.phone }}" title="Call {{ m.phone }}"
+                                       class="inline-flex items-center justify-center w-6 h-6 rounded-md bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white border border-blue-200 transition shadow-2xs">
+                                        <i data-lucide="phone" class="w-3.5 h-3.5"></i>
+                                    </a>
+                                </div>
+                            </div>
+                            {% else %}
+                            <span class="text-slate-400">—</span>
+                            {% endif %}
                         </td>
 
                         <!-- Status Badge -->
-                        <td class="px-6 py-4">
+                        <td class="px-6 py-4" data-sort-val="{{ m.status }}">
                             <span class="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs rounded-full border font-semibold
                                 {% if m.status == 'Active' %}bg-emerald-50 text-emerald-700 border-emerald-200
                                 {% elif m.status == 'Inactive' %}bg-slate-100 text-slate-600 border-slate-200
@@ -158,7 +192,7 @@
                         </td>
 
                         <!-- Pathways Level Badge -->
-                        <td class="px-6 py-4">
+                        <td class="px-6 py-4" data-sort-val="{{ m.pathway_level or 'Level 1' }}">
                             <span class="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold rounded-md border
                                 {% if m.pathway_level == 'DTM' %}bg-amber-100 text-amber-900 border-amber-300 font-bold
                                 {% elif m.pathway_level == 'Level 5' %}bg-purple-50 text-purple-700 border-purple-200
@@ -171,7 +205,7 @@
                         </td>
 
                         <!-- Dues Renewal Status Indicator -->
-                        <td class="px-6 py-4">
+                        <td class="px-6 py-4" data-sort-val="{{ m.renewal_info.days_left if m.renewal_info else 999 }}">
                             {% if m.renewal_info %}
                             <div class="flex flex-col items-start gap-1">
                                 <span class="inline-flex items-center gap-1.5 px-2 py-0.5 text-[11px] rounded-full border font-medium {{ m.renewal_info.badge_class }}">
@@ -200,7 +234,7 @@
                         </td>
                     </tr>
                     {% else %}
-                    <tr>
+                    <tr class="empty-row">
                         <td colspan="6" class="py-16 text-center">
                             <div class="flex flex-col items-center justify-center space-y-3">
                                 <div class="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center text-3xl shadow-inner">
@@ -224,18 +258,33 @@
 </div>
 
 <script>
+function handleMemberSearch(input) {
+    const clearBtn = document.getElementById('member-search-clear');
+    if (clearBtn) {
+        clearBtn.classList.toggle('hidden', !input.value);
+    }
+    filterMemberTable();
+}
+
+function clearMemberSearch() {
+    const input = document.getElementById('member-search');
+    const clearBtn = document.getElementById('member-search-clear');
+    if (input) {
+        input.value = '';
+        input.focus();
+    }
+    if (clearBtn) clearBtn.classList.add('hidden');
+    filterMemberTable();
+}
+
 function filterMemberTable() {
     const input = document.getElementById('member-search');
-    const filter = input.value.toLowerCase();
+    const filter = input ? input.value.toLowerCase() : '';
     const rows = document.querySelectorAll('.member-row');
 
     rows.forEach(row => {
-        const name = row.querySelector('.member-name')?.textContent.toLowerCase() || '';
-        if (name.includes(filter)) {
-            row.style.display = '';
-        } else {
-            row.style.display = 'none';
-        }
+        const text = row.textContent.toLowerCase();
+        row.style.display = text.includes(filter) ? '' : 'none';
     });
 }
 </script>

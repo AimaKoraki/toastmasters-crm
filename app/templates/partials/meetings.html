@@ -35,13 +35,21 @@
     <!-- Meetings Table Card -->
     <div class="card overflow-hidden">
         <div class="overflow-x-auto">
-            <table class="w-full text-left text-sm text-gray-600">
-                <thead class="bg-slate-50 text-[13px] font-semibold uppercase tracking-[0.08em] text-slate-500 border-b border-slate-200">
+            <table class="w-full text-left text-sm text-gray-600" id="meetings-table">
+                <thead class="bg-slate-50 text-[13px] font-semibold uppercase tracking-[0.08em] text-slate-500 border-b border-slate-200 select-none">
                     <tr>
-                        <th class="px-6 py-3.5">Meeting #</th>
-                        <th class="px-6 py-3.5">Date</th>
-                        <th class="px-6 py-3.5">Theme</th>
-                        <th class="px-6 py-3.5">Attendance Status</th>
+                        <th class="px-6 py-3.5 cursor-pointer hover:bg-slate-100/80 transition group" onclick="sortTable('meetings-table', 0, 'number')">
+                            <span class="inline-flex items-center gap-1">Meeting # <span class="sort-icon text-slate-300 group-hover:text-slate-500 text-xs">↕</span></span>
+                        </th>
+                        <th class="px-6 py-3.5 cursor-pointer hover:bg-slate-100/80 transition group" onclick="sortTable('meetings-table', 1, 'string')">
+                            <span class="inline-flex items-center gap-1">Date <span class="sort-icon text-slate-300 group-hover:text-slate-500 text-xs">↕</span></span>
+                        </th>
+                        <th class="px-6 py-3.5 cursor-pointer hover:bg-slate-100/80 transition group" onclick="sortTable('meetings-table', 2, 'string')">
+                            <span class="inline-flex items-center gap-1">Theme <span class="sort-icon text-slate-300 group-hover:text-slate-500 text-xs">↕</span></span>
+                        </th>
+                        <th class="px-6 py-3.5 cursor-pointer hover:bg-slate-100/80 transition group" onclick="sortTable('meetings-table', 3, 'number')">
+                            <span class="inline-flex items-center gap-1">Attendance Status <span class="sort-icon text-slate-300 group-hover:text-slate-500 text-xs">↕</span></span>
+                        </th>
                         <th class="px-6 py-3.5 text-right">Actions</th>
                     </tr>
                 </thead>
@@ -49,7 +57,7 @@
                     {% for m in meetings %}
                     <tr class="hover:bg-slate-50/70 transition-colors">
                         <!-- Meeting Number -->
-                        <td class="px-6 py-4">
+                        <td class="px-6 py-4" data-sort-val="{{ m.meeting_number }}">
                             <div class="flex items-center gap-2">
                                 <div class="w-8 h-8 rounded-lg bg-blue-50 text-blue-700 font-bold text-xs flex items-center justify-center border border-blue-200">
                                     #{{ m.meeting_number }}
@@ -59,12 +67,12 @@
                         </td>
 
                         <!-- Meeting Date -->
-                        <td class="px-6 py-4 text-slate-600 text-xs font-mono">
+                        <td class="px-6 py-4 text-slate-600 text-xs font-mono" data-sort-val="{{ m.meeting_date }}">
                             {{ m.meeting_date }}
                         </td>
 
                         <!-- Theme -->
-                        <td class="px-6 py-4 text-slate-700 text-sm">
+                        <td class="px-6 py-4 text-slate-700 text-sm" data-sort-val="{{ m.theme or '' }}">
                             {% if m.theme %}
                             <span class="font-medium italic text-slate-900">"{{ m.theme }}"</span>
                             {% else %}
@@ -73,7 +81,7 @@
                         </td>
 
                         <!-- Attendance Stats Pill -->
-                        <td class="px-6 py-4">
+                        <td class="px-6 py-4" data-sort-val="{{ m.present_count or 0 }}">
                             {% if m.total_attendance and m.total_attendance > 0 %}
                             <div class="flex items-center gap-2">
                                 <span class="inline-flex items-center gap-1 px-2.5 py-1 text-xs rounded-full font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
@@ -101,14 +109,14 @@
                         <!-- Actions -->
                         <td class="px-6 py-4 text-right">
                             <button hx-get="/meetings/{{ m.id }}/attendance" hx-target="#main-content"
-                                    class="px-3 py-1.5 text-xs font-semibold text-blue-600 hover:text-white hover:bg-[#2563eb] border border-blue-200 rounded-lg inline-flex items-center gap-1.5 transition shadow-sm">
+                                     class="px-3 py-1.5 text-xs font-semibold text-blue-600 hover:text-white hover:bg-[#2563eb] border border-blue-200 rounded-lg inline-flex items-center gap-1.5 transition shadow-sm">
                                 <i data-lucide="check-square" class="w-3.5 h-3.5"></i>
                                 {% if m.total_attendance and m.total_attendance > 0 %}Edit Attendance{% else %}Mark Attendance{% endif %}
                             </button>
                         </td>
                     </tr>
                     {% else %}
-                    <tr>
+                    <tr class="empty-row">
                         <td colspan="5" class="py-16 text-center">
                             <div class="flex flex-col items-center justify-center space-y-3">
                                 <div class="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center text-3xl shadow-inner">

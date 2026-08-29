@@ -138,11 +138,11 @@
                         Agenda
                     </a>
                     <a href="#"
-                       data-nav="role_matrix"
+                       data-nav="evaluations"
                        hx-get="/roles"
                        hx-target="#main-content"
                        onclick="setActiveNav(this); closeMobileNav();"
-                       class="nav-link flex items-center px-3 py-2 text-sm rounded-lg transition-all text-slate-300 hover:text-white hover:bg-[#1e293b]/50 {% if active_page == 'evaluations' or active_page == 'role_matrix' %}bg-[#2563eb] text-white font-semibold{% endif %}">
+                       class="nav-link flex items-center px-3 py-2 text-sm rounded-lg transition-all text-slate-300 hover:text-white hover:bg-[#1e293b]/50 {% if active_page == 'evaluations' %}bg-[#2563eb] text-white font-semibold{% endif %}">
                         <i data-lucide="award" class="w-5 h-5 mr-3 inline-block"></i>
                         Evaluations
                     </a>
@@ -310,6 +310,19 @@
 
         document.body.addEventListener('htmx:afterRequest', function(evt) {
             document.body.classList.remove('htmx-request');
+
+            // If a mutation inside a modal succeeded, automatically dismiss the modal
+            if (evt.detail.successful) {
+                const trigger = evt.detail.elt;
+                const modalContainer = document.getElementById('modal-container');
+                if (modalContainer && modalContainer.contains(trigger)) {
+                    modalContainer.innerHTML = '';
+                }
+                const cssModal = trigger ? trigger.closest('[id$="-modal"]') : null;
+                if (cssModal && !cssModal.classList.contains('hidden')) {
+                    cssModal.classList.add('hidden');
+                }
+            }
         });
 
         // Catch backend HTTP errors (400, 422, 500 etc.) and show toast
@@ -429,14 +442,119 @@
             });
         });
 
+        // ── Backdrop click closes modal ──────────────────────────────
+        document.addEventListener('click', function(e) {
+            const mc = document.getElementById('modal-container');
+            if (mc && mc.innerHTML.trim() !== '' && e.target === mc.firstElementChild) {
+                mc.innerHTML = '';
+                return;
+            }
+            if (e.target.id && e.target.id.endsWith('-modal') && !e.target.classList.contains('hidden')) {
+                e.target.classList.add('hidden');
+            }
+        });
+
+        // ── Direct 1-Click WhatsApp Outreach Helper ──────────────────
+        function openWhatsAppOutreach(phone, name, stage = '') {
+            if (!phone) {
+                showToast('No phone number recorded for this contact.', 'warning');
+                return;
+            }
+            const cleanPhone = phone.replace(/[^0-9]/g, '');
+            if (!cleanPhone) {
+                showToast('Invalid phone number format.', 'warning');
+                return;
+            }
+            let text = `Hi ${name}, thank you for attending APIIT Kandy Toastmasters! We would love to see you at our next meeting. Please let us know if you have any questions!`;
+            if (stage === 'Form Sent' || stage === 'Payment Pending') {
+                text = `Hi ${name}, following up from APIIT Kandy Toastmasters regarding your membership registration. Let us know if we can help you with anything!`;
+            } else if (stage === 'Onboarded' || stage === 'Active') {
+                text = `Hi ${name}, hope you're doing well! Reaching out from APIIT Kandy Toastmasters regarding our upcoming club meeting.`;
+            } else if (stage === 'Inactive' || stage === 'Alumni') {
+                text = `Hi ${name}, we miss you at APIIT Kandy Toastmasters! Hope you're doing well. We'd love to welcome you back at our next meeting.`;
+            }
+            const url = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(text)}`;
+            window.open(url, '_blank');
+        }
+
+        // ── Global Table Column Sorting Engine ────────────────────────
+        let currentSortCol = -1;
+        let currentSortDir = 'asc';
+
+        function sortTable(tableId, colIndex, type = 'string') {
+            const table = document.getElementById(tableId);
+            if (!table) return;
+            const tbody = table.querySelector('tbody');
+            if (!tbody) return;
+            const rows = Array.from(tbody.querySelectorAll('tr:not(.empty-row)'));
+            if (rows.length <= 1) return;
+
+            if (currentSortCol === colIndex) {
+                currentSortDir = currentSortDir === 'asc' ? 'desc' : 'asc';
+            } else {
+                currentSortCol = colIndex;
+                currentSortDir = 'asc';
+            }
+
+            // Update header sort indicators
+            const ths = table.querySelectorAll('thead th');
+            ths.forEach((th, idx) => {
+                const icon = th.querySelector('.sort-icon');
+                if (icon) {
+                    if (idx === colIndex) {
+                        icon.textContent = currentSortDir === 'asc' ? ' ↑' : ' ↓';
+                        icon.classList.remove('text-slate-300');
+                        icon.classList.add('text-blue-600', 'font-bold');
+                    } else {
+                        icon.textContent = ' ↕';
+                        icon.classList.remove('text-blue-600', 'font-bold');
+                        icon.classList.add('text-slate-300');
+                    }
+                }
+            });
+
+            rows.sort((a, b) => {
+                const cellA = a.children[colIndex];
+                const cellB = b.children[colIndex];
+                if (!cellA || !cellB) return 0;
+
+                let valA = cellA.getAttribute('data-sort-val') !== null ? cellA.getAttribute('data-sort-val') : cellA.textContent.trim();
+                let valB = cellB.getAttribute('data-sort-val') !== null ? cellB.getAttribute('data-sort-val') : cellB.textContent.trim();
+
+                if (type === 'number') {
+                    const numA = parseFloat(valA.replace(/[^0-9.-]/g, '')) || 0;
+                    const numB = parseFloat(valB.replace(/[^0-9.-]/g, '')) || 0;
+                    return currentSortDir === 'asc' ? numA - numB : numB - numA;
+                }
+
+                const comp = valA.localeCompare(valB, undefined, { numeric: true, sensitivity: 'base' });
+                return currentSortDir === 'asc' ? comp : -comp;
+            });
+
+            rows.forEach(r => tbody.appendChild(r));
+        }
+
         // ── Dashboard guest pipeline search ──────────────────────────
         function filterDashboardGuests(query) {
             const rows = document.querySelectorAll('#dashboard-guest-table tbody tr');
+            const clearBtn = document.getElementById('dashboard-guest-search-clear');
+            if (clearBtn) clearBtn.classList.toggle('hidden', !query);
             const q = query.toLowerCase();
             rows.forEach(row => {
                 const name = row.querySelector('.guest-name')?.textContent.toLowerCase() || '';
                 row.style.display = name.includes(q) ? '' : 'none';
             });
+        }
+
+        function clearDashboardGuestSearch() {
+            const input = document.getElementById('dashboard-guest-search');
+            const clearBtn = document.getElementById('dashboard-guest-search-clear');
+            if (input) {
+                input.value = '';
+                input.focus();
+            }
+            if (clearBtn) clearBtn.classList.add('hidden');
+            filterDashboardGuests('');
         }
     </script>
 </body>
