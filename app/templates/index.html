@@ -38,7 +38,7 @@
                 <!-- MAIN COLUMN (Left / 8 cols) -->
                 <div class="lg:col-span-8 space-y-6">
                     
-                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
                         <!-- Upcoming Meeting Card -->
                         <section class="card bg-[#1e293b] text-white overflow-hidden relative">
                             <!-- Decorative background element -->
@@ -211,19 +211,19 @@
                     <section class="card card-hover p-6 h-full">
                         <h2 class="text-[20px] font-semibold text-gray-900 mb-6">Recent Activity</h2>
                         
-                        <div class="space-y-6 relative before:absolute before:inset-0 before:ml-5 before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-gray-200 before:to-transparent">
+                        <div class="space-y-4 relative before:absolute before:top-2 before:bottom-2 before:left-4 before:w-0.5 before:bg-slate-200">
                             {% for act in recent_activities %}
-                            <div class="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active">
-                                <div class="flex items-center justify-center w-10 h-10 rounded-full border-2 border-white bg-green-100 text-green-600 shadow shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2">
-                                    <i data-lucide="check" class="w-5 h-5"></i>
+                            <div class="relative flex items-start gap-3.5 group">
+                                <div class="w-8 h-8 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0 border-2 border-white shadow-xs z-10">
+                                    <i data-lucide="check" class="w-4 h-4"></i>
                                 </div>
-                                <div class="w-[calc(100%-4rem)] md:w-[calc(50%-2.5rem)] p-4 rounded-lg border border-gray-200 bg-white shadow-sm hover:shadow-md transition">
-                                    <div class="mb-1 text-sm font-semibold text-gray-900">{{ act.text }}</div>
-                                    <time class="block mb-1 text-xs font-normal text-gray-500">{{ act.parsed_time.strftime('%b %d, %Y - %I:%M %p') if act.parsed_time else act.timestamp }}</time>
+                                <div class="flex-1 p-3.5 rounded-xl border border-gray-200/80 bg-white shadow-2xs hover:shadow-xs transition">
+                                    <div class="text-xs font-semibold text-gray-900 leading-snug">{{ act.text }}</div>
+                                    <time class="block text-[11px] text-gray-400 mt-1">{{ act.parsed_time.strftime('%b %d, %Y - %I:%M %p') if act.parsed_time else act.timestamp }}</time>
                                 </div>
                             </div>
                             {% else %}
-                            <div class="text-sm text-gray-500 text-center py-4">No recent activity found.</div>
+                            <div class="text-xs text-gray-500 text-center py-6">No recent activity found.</div>
                             {% endfor %}
                         </div>
                     </section>

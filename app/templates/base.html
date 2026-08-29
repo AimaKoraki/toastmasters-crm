@@ -204,7 +204,7 @@
     <!-- ============================================================ -->
     <!-- MAIN BODY AREA                                                -->
     <!-- ============================================================ -->
-    <main class="w-full {% if request.session.get('authenticated') %}md:ml-64{% endif %} flex-1 bg-slate-50 min-h-screen flex flex-col">
+    <main class="{% if request.session.get('authenticated') %}md:ml-64{% endif %} flex-1 min-w-0 bg-slate-50 min-h-screen flex flex-col">
 
         {% if request.session.get("authenticated") %}
         <!-- Dynamic Top Bar (Desktop) — updates on navigation -->
