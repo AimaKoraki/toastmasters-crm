@@ -43,18 +43,39 @@
     </script>
 </head>
 <body class="bg-slate-50 text-ui-textMain min-h-screen flex">
-    <!-- Left Sidebar -->
     {% if request.session.get("authenticated") %}
-    <aside class="hidden md:flex w-64 min-h-screen bg-[#0f172a] text-slate-200 flex-col justify-between p-4 fixed left-0 top-0 bottom-0 overflow-y-auto border-r border-slate-800 shadow-lg z-30">
+
+    <!-- ============================================================ -->
+    <!-- MOBILE OVERLAY (darkens screen when drawer is open)          -->
+    <!-- ============================================================ -->
+    <div id="mobile-overlay" class="fixed inset-0 bg-black/50 z-40 hidden md:hidden" onclick="closeMobileNav()"></div>
+
+    <!-- ============================================================ -->
+    <!-- LEFT SIDEBAR (Desktop: always visible, Mobile: slide-out)    -->
+    <!-- ============================================================ -->
+    <aside id="sidebar"
+           class="w-64 min-h-screen bg-[#0f172a] text-slate-200 flex-col justify-between p-4
+                  fixed left-0 top-0 bottom-0 overflow-y-auto border-r border-slate-800 shadow-lg z-50
+                  flex
+                  -translate-x-full md:translate-x-0
+                  transition-transform duration-300 ease-in-out">
         <div>
             <!-- Brand -->
-            <div class="mb-8 px-3">
-                <h2 class="text-xl font-bold text-white">APIIT Kandy</h2>
-                <p class="text-sm text-blue-200 mt-1">Club CRM</p>
+            <div class="mb-8 px-3 flex items-center justify-between">
+                <div>
+                    <h2 class="text-xl font-bold text-white">APIIT Kandy</h2>
+                    <p class="text-sm text-blue-200 mt-1">Club CRM</p>
+                </div>
+                <!-- Mobile close button -->
+                <button onclick="closeMobileNav()" class="md:hidden text-slate-400 hover:text-white p-1">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
             </div>
-            
+
             <!-- Dashboard -->
-            <a href="/" class="flex items-center px-3 py-2 text-sm rounded-lg transition-all text-slate-300 hover:text-white hover:bg-[#1e293b]/50 {% if active_page == 'dashboard' %}bg-[#2563eb] text-white font-semibold{% endif %} mb-6">
+            <a href="/"
+               data-nav="dashboard"
+               class="nav-link flex items-center px-3 py-2 text-sm rounded-lg transition-all text-slate-300 hover:text-white hover:bg-[#1e293b]/50 mb-6 {% if active_page == 'dashboard' %}bg-[#2563eb] text-white font-semibold{% endif %}">
                 <i data-lucide="layout-dashboard" class="w-5 h-5 mr-3 inline-block"></i>
                 Dashboard
             </a>
@@ -63,17 +84,28 @@
             <div class="mb-6">
                 <div class="px-3 mb-2 text-xs font-semibold tracking-wider text-slate-400 uppercase">CRM</div>
                 <nav class="space-y-1">
-                    <a href="#" hx-get="/prospects" hx-target="#main-content" class="flex items-center px-3 py-2 text-sm rounded-lg transition-all text-slate-300 hover:text-white hover:bg-[#1e293b]/50 {% if active_page == 'guests' %}bg-[#2563eb] text-white font-semibold{% endif %}">
+                    <a href="#"
+                       data-nav="guests"
+                       hx-get="/prospects"
+                       hx-target="#main-content"
+                       onclick="setActiveNav(this); closeMobileNav();"
+                       class="nav-link flex items-center px-3 py-2 text-sm rounded-lg transition-all text-slate-300 hover:text-white hover:bg-[#1e293b]/50 {% if active_page == 'guests' %}bg-[#2563eb] text-white font-semibold{% endif %}">
                         <i data-lucide="user-plus" class="w-5 h-5 mr-3 inline-block"></i>
                         Guests
                     </a>
-                    <a href="#" class="flex items-center px-3 py-2 text-sm rounded-lg transition-all text-slate-300 hover:text-white hover:bg-[#1e293b]/50 {% if active_page == 'members' %}bg-[#2563eb] text-white font-semibold{% endif %}">
+                    <a href="#"
+                       data-nav="members"
+                       class="nav-link flex items-center px-3 py-2 text-sm rounded-lg transition-all text-slate-300 hover:text-white hover:bg-[#1e293b]/50 {% if active_page == 'members' %}bg-[#2563eb] text-white font-semibold{% endif %}">
                         <i data-lucide="users" class="w-5 h-5 mr-3 inline-block"></i>
                         Members
+                        <span class="ml-auto text-[10px] font-semibold text-slate-500 bg-slate-800 px-1.5 py-0.5 rounded">Soon</span>
                     </a>
-                    <a href="#" class="flex items-center px-3 py-2 text-sm rounded-lg transition-all text-slate-300 hover:text-white hover:bg-[#1e293b]/50 {% if active_page == 'follow_ups' %}bg-[#2563eb] text-white font-semibold{% endif %}">
+                    <a href="#"
+                       data-nav="follow_ups"
+                       class="nav-link flex items-center px-3 py-2 text-sm rounded-lg transition-all text-slate-300 hover:text-white hover:bg-[#1e293b]/50 {% if active_page == 'follow_ups' %}bg-[#2563eb] text-white font-semibold{% endif %}">
                         <i data-lucide="phone-incoming" class="w-5 h-5 mr-3 inline-block"></i>
                         Follow-ups
+                        <span class="ml-auto text-[10px] font-semibold text-slate-500 bg-slate-800 px-1.5 py-0.5 rounded">Soon</span>
                     </a>
                 </nav>
             </div>
@@ -82,15 +114,30 @@
             <div class="mb-6">
                 <div class="px-3 mb-2 text-xs font-semibold tracking-wider text-slate-400 uppercase">Meetings</div>
                 <nav class="space-y-1">
-                    <a href="#" hx-get="/meetings" hx-target="#main-content" class="flex items-center px-3 py-2 text-sm rounded-lg transition-all text-slate-300 hover:text-white hover:bg-[#1e293b]/50 {% if active_page == 'attendance' %}bg-[#2563eb] text-white font-semibold{% endif %}">
+                    <a href="#"
+                       data-nav="attendance"
+                       hx-get="/meetings"
+                       hx-target="#main-content"
+                       onclick="setActiveNav(this); closeMobileNav();"
+                       class="nav-link flex items-center px-3 py-2 text-sm rounded-lg transition-all text-slate-300 hover:text-white hover:bg-[#1e293b]/50 {% if active_page == 'attendance' %}bg-[#2563eb] text-white font-semibold{% endif %}">
                         <i data-lucide="calendar-check" class="w-5 h-5 mr-3 inline-block"></i>
                         Attendance
                     </a>
-                    <a href="#" class="flex items-center px-3 py-2 text-sm rounded-lg transition-all text-slate-300 hover:text-white hover:bg-[#1e293b]/50 {% if active_page == 'agenda' %}bg-[#2563eb] text-white font-semibold{% endif %}">
+                    <a href="#"
+                       data-nav="agenda"
+                       hx-get="/meetings/live"
+                       hx-target="#main-content"
+                       onclick="setActiveNav(this); closeMobileNav();"
+                       class="nav-link flex items-center px-3 py-2 text-sm rounded-lg transition-all text-slate-300 hover:text-white hover:bg-[#1e293b]/50 {% if active_page == 'agenda' %}bg-[#2563eb] text-white font-semibold{% endif %}">
                         <i data-lucide="file-text" class="w-5 h-5 mr-3 inline-block"></i>
                         Agenda
                     </a>
-                    <a href="#" class="flex items-center px-3 py-2 text-sm rounded-lg transition-all text-slate-300 hover:text-white hover:bg-[#1e293b]/50 {% if active_page == 'evaluations' %}bg-[#2563eb] text-white font-semibold{% endif %}">
+                    <a href="#"
+                       data-nav="role_matrix"
+                       hx-get="/roles"
+                       hx-target="#main-content"
+                       onclick="setActiveNav(this); closeMobileNav();"
+                       class="nav-link flex items-center px-3 py-2 text-sm rounded-lg transition-all text-slate-300 hover:text-white hover:bg-[#1e293b]/50 {% if active_page == 'evaluations' or active_page == 'role_matrix' %}bg-[#2563eb] text-white font-semibold{% endif %}">
                         <i data-lucide="award" class="w-5 h-5 mr-3 inline-block"></i>
                         Evaluations
                     </a>
@@ -101,11 +148,21 @@
             <div class="mb-6">
                 <div class="px-3 mb-2 text-xs font-semibold tracking-wider text-slate-400 uppercase">Management</div>
                 <nav class="space-y-1">
-                    <a href="#" hx-get="/roles" hx-target="#main-content" class="flex items-center px-3 py-2 text-sm rounded-lg transition-all text-slate-300 hover:text-white hover:bg-[#1e293b]/50 {% if active_page == 'role_matrix' %}bg-[#2563eb] text-white font-semibold{% endif %}">
+                    <a href="#"
+                       data-nav="role_matrix"
+                       hx-get="/roles"
+                       hx-target="#main-content"
+                       onclick="setActiveNav(this); closeMobileNav();"
+                       class="nav-link flex items-center px-3 py-2 text-sm rounded-lg transition-all text-slate-300 hover:text-white hover:bg-[#1e293b]/50 {% if active_page == 'role_matrix' %}bg-[#2563eb] text-white font-semibold{% endif %}">
                         <i data-lucide="grid" class="w-5 h-5 mr-3 inline-block"></i>
                         Role Matrix
                     </a>
-                    <a href="#" hx-get="/reports" hx-target="#main-content" class="flex items-center px-3 py-2 text-sm rounded-lg transition-all text-slate-300 hover:text-white hover:bg-[#1e293b]/50 {% if active_page == 'reports' %}bg-[#2563eb] text-white font-semibold{% endif %}">
+                    <a href="#"
+                       data-nav="reports"
+                       hx-get="/reports"
+                       hx-target="#main-content"
+                       onclick="setActiveNav(this); closeMobileNav();"
+                       class="nav-link flex items-center px-3 py-2 text-sm rounded-lg transition-all text-slate-300 hover:text-white hover:bg-[#1e293b]/50 {% if active_page == 'reports' %}bg-[#2563eb] text-white font-semibold{% endif %}">
                         <i data-lucide="bar-chart-3" class="w-5 h-5 mr-3 inline-block"></i>
                         Reports
                     </a>
@@ -113,36 +170,172 @@
             </div>
         </div>
 
-        <!-- Footer / Settings -->
+        <!-- Footer / Logout -->
         <div class="mt-auto pt-4 border-t border-slate-700/50">
             <nav class="space-y-1">
-                <a href="#" class="flex items-center px-3 py-2 text-sm rounded-lg transition-all text-slate-300 hover:text-white hover:bg-[#1e293b]/50 {% if active_page == 'settings' %}bg-[#2563eb] text-white font-semibold{% endif %}">
-                    <i data-lucide="settings" class="w-5 h-5 mr-3 inline-block"></i>
-                    Settings
-                </a>
-                <a href="/logout" class="flex items-center px-3 py-2 text-sm rounded-lg transition-all text-red-400 hover:text-red-300 hover:bg-red-900/20 mt-2">
+                <a href="/logout" class="flex items-center px-3 py-2 text-sm rounded-lg transition-all text-red-400 hover:text-red-300 hover:bg-red-900/20">
                     <i data-lucide="log-out" class="w-5 h-5 mr-3 inline-block"></i>
                     Logout
                 </a>
             </nav>
         </div>
     </aside>
+
+    <!-- ============================================================ -->
+    <!-- MOBILE TOP BAR (only visible on mobile)                       -->
+    <!-- ============================================================ -->
+    <div class="fixed top-0 left-0 right-0 h-14 bg-[#0f172a] flex items-center justify-between px-4 z-30 md:hidden border-b border-slate-800 shadow-sm">
+        <button onclick="openMobileNav()" class="text-slate-300 hover:text-white p-1">
+            <i data-lucide="menu" class="w-6 h-6"></i>
+        </button>
+        <div class="text-white font-bold text-base">
+            <span id="mobile-page-title">APIIT Kandy CRM</span>
+        </div>
+        <div class="w-8"></div><!-- spacer for symmetry -->
+    </div>
+
     {% endif %}
 
-    <!-- Main Body Area -->
+    <!-- ============================================================ -->
+    <!-- MAIN BODY AREA                                                -->
+    <!-- ============================================================ -->
     <main class="w-full {% if request.session.get('authenticated') %}md:ml-64{% endif %} flex-1 bg-slate-50 min-h-screen flex flex-col">
+
+        {% if request.session.get("authenticated") %}
+        <!-- Dynamic Top Bar (Desktop) — updates on navigation -->
+        <header id="top-bar" class="hidden md:flex bg-white border-b border-gray-200 shadow-sm px-6 py-4 justify-between items-center sticky top-0 z-20">
+            <div>
+                <h1 id="top-bar-title" class="text-[28px] font-bold text-gray-900 tracking-tight gold-underline">
+                    {% block page_title %}Dashboard{% endblock %}
+                </h1>
+                <p id="top-bar-subtitle" class="text-xs text-slate-400 mt-0.5">{% block page_subtitle %}APIIT Kandy Toastmasters{% endblock %}</p>
+            </div>
+            <div class="flex items-center space-x-2 bg-green-50 px-3 py-1.5 rounded-full border border-green-200">
+                <span class="relative flex h-3 w-3">
+                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                    <span class="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
+                </span>
+                <span class="text-sm font-medium text-green-700">Exco Session Active</span>
+            </div>
+        </header>
+        <!-- Mobile spacer to push content below fixed mobile bar -->
+        <div class="h-14 md:hidden"></div>
+        {% endif %}
+
         {% block content %}
         {% endblock %}
     </main>
-    
+
     <!-- Global Modal Container for HTMX -->
     <div id="modal-container"></div>
 
     <script>
-      lucide.createIcons();
-      document.body.addEventListener('htmx:afterSettle', function() {
-          lucide.createIcons();
-      });
+        // ── Lucide icon init ──────────────────────────────────────────
+        lucide.createIcons();
+        document.body.addEventListener('htmx:afterSettle', function() {
+            lucide.createIcons();
+        });
+
+        // ── Page title & sidebar active state on HTMX nav ────────────
+        // Map of endpoint patterns → { title, subtitle, nav key }
+        const PAGE_MAP = [
+            { pattern: /^\/prospects/,       title: 'Guest & Prospect Pipeline', subtitle: 'Track and convert visitors to members', nav: 'guests' },
+            { pattern: /^\/meetings\/live/,  title: 'Live Meeting Console',       subtitle: 'Meeting day operations hub',            nav: 'agenda' },
+            { pattern: /^\/meetings\/\d+\/attendance/, title: 'Attendance Check-in', subtitle: 'Batch mark member attendance', nav: 'attendance' },
+            { pattern: /^\/meetings\/attendance/, title: 'Attendance Check-in',   subtitle: 'Batch mark member attendance',         nav: 'attendance' },
+            { pattern: /^\/meetings/,         title: 'Meetings & Attendance',     subtitle: 'Schedule and track club meetings',     nav: 'attendance' },
+            { pattern: /^\/attendance/,       title: 'Meetings & Attendance',     subtitle: 'Schedule and track club meetings',     nav: 'attendance' },
+            { pattern: /^\/roles\/member/,    title: 'Member Role History',       subtitle: 'Role participation timeline',          nav: 'role_matrix' },
+            { pattern: /^\/roles\/assign/,    title: 'Assign Role',               subtitle: 'Assign meeting roles to members',      nav: 'role_matrix' },
+            { pattern: /^\/roles/,            title: 'Role History Matrix',       subtitle: 'Track role distribution equitably',    nav: 'role_matrix' },
+            { pattern: /^\/reports\/export/,  title: 'Export Reports',            subtitle: 'Download data as CSV',                 nav: 'reports' },
+            { pattern: /^\/reports/,          title: 'Analytics & Reports',       subtitle: 'Club data and export tools',           nav: 'reports' },
+        ];
+
+        function resolvePageMeta(url) {
+            for (const entry of PAGE_MAP) {
+                if (entry.pattern.test(url)) return entry;
+            }
+            return null;
+        }
+
+        function setActiveNav(el) {
+            document.querySelectorAll('.nav-link').forEach(link => {
+                link.classList.remove('bg-[#2563eb]', 'text-white', 'font-semibold');
+                link.classList.add('text-slate-300');
+            });
+            el.classList.add('bg-[#2563eb]', 'text-white', 'font-semibold');
+            el.classList.remove('text-slate-300');
+        }
+
+        function updateTopBar(title, subtitle) {
+            const titleEl = document.getElementById('top-bar-title');
+            const subtitleEl = document.getElementById('top-bar-subtitle');
+            const mobileTitleEl = document.getElementById('mobile-page-title');
+            if (titleEl) titleEl.textContent = title;
+            if (subtitleEl) subtitleEl.textContent = subtitle || '';
+            if (mobileTitleEl) mobileTitleEl.textContent = title;
+        }
+
+        function activateNavByKey(navKey) {
+            document.querySelectorAll('.nav-link').forEach(link => {
+                const isActive = link.getAttribute('data-nav') === navKey;
+                link.classList.toggle('bg-[#2563eb]', isActive);
+                link.classList.toggle('text-white', isActive);
+                link.classList.toggle('font-semibold', isActive);
+                link.classList.toggle('text-slate-300', !isActive);
+            });
+        }
+
+        // Listen to all HTMX requests and update UI accordingly
+        document.body.addEventListener('htmx:configRequest', function(evt) {
+            const url = evt.detail.path;
+            const meta = resolvePageMeta(url);
+            if (meta) {
+                updateTopBar(meta.title, meta.subtitle);
+                activateNavByKey(meta.nav);
+            }
+        });
+
+        // ── Mobile Navigation ─────────────────────────────────────────
+        function openMobileNav() {
+            document.getElementById('sidebar').classList.remove('-translate-x-full');
+            document.getElementById('mobile-overlay').classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeMobileNav() {
+            document.getElementById('sidebar').classList.add('-translate-x-full');
+            document.getElementById('mobile-overlay').classList.add('hidden');
+            document.body.style.overflow = '';
+        }
+
+        // ── Escape key closes any open modal ─────────────────────────
+        document.addEventListener('keydown', function(e) {
+            if (e.key !== 'Escape') return;
+
+            // Close HTMX-injected modals in #modal-container
+            const mc = document.getElementById('modal-container');
+            if (mc && mc.innerHTML.trim() !== '') {
+                mc.innerHTML = '';
+                return;
+            }
+
+            // Close CSS hidden-class modals (assign-role-modal, etc.)
+            document.querySelectorAll('[id$="-modal"]:not(.hidden)').forEach(m => {
+                m.classList.add('hidden');
+            });
+        });
+
+        // ── Dashboard guest pipeline search ──────────────────────────
+        function filterDashboardGuests(query) {
+            const rows = document.querySelectorAll('#dashboard-guest-table tbody tr');
+            const q = query.toLowerCase();
+            rows.forEach(row => {
+                const name = row.querySelector('.guest-name')?.textContent.toLowerCase() || '';
+                row.style.display = name.includes(q) ? '' : 'none';
+            });
+        }
     </script>
 </body>
 </html>

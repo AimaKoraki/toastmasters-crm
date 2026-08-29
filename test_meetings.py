@@ -19,14 +19,16 @@ def test_authenticated_get_meetings():
 
 def test_create_meeting():
     login()
+    import time
+    unique_number = int(str(int(time.time()))[-4:]) + 5000  # e.g. 58734
     meeting_data = {
-        "meeting_number": 888,
+        "meeting_number": unique_number,
         "meeting_date": "2026-09-20",
         "theme": "Dynamic Attendance Test"
     }
     response = client.post("/meetings", data=meeting_data)
     assert response.status_code == 200
-    assert "Meeting #888" in response.text or "Meetings &amp; Attendance" in response.text
+    assert f"Meeting #{unique_number}" in response.text or "Meetings &amp; Attendance" in response.text
 
 def test_get_new_meeting_modal():
     login()

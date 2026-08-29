@@ -1,22 +1,10 @@
 {% extends "base.html" %}
 
 {% block title %}Dashboard - Club CRM{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+{% block page_subtitle %}APIIT Kandy Toastmasters — Executive Overview{% endblock %}
 
 {% block content %}
-        <!-- Dashboard Header -->
-        <header class="bg-white border-b border-gray-200 shadow-sm p-6 flex justify-between items-center">
-            <div>
-                <h1 class="text-[32px] font-bold text-gray-900 tracking-tight gold-underline">Dashboard</h1>
-            </div>
-            <div class="flex items-center space-x-2 bg-green-50 px-3 py-1.5 rounded-full border border-green-200">
-                <span class="relative flex h-3 w-3">
-                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                    <span class="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
-                </span>
-                <span class="text-sm font-medium text-green-700">Welcome, Exco Session Active</span>
-            </div>
-        </header>
-        
         <!-- Main Content Area -->
         <div id="main-content" class="p-6 flex-1 overflow-y-auto">
             
@@ -119,11 +107,11 @@
                         <div class="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
                             <h2 class="text-[20px] font-semibold text-gray-900">Guest Pipeline</h2>
                             <div class="flex space-x-2">
-                                <input type="text" placeholder="Search guests..." class="text-sm border border-gray-300 rounded-md px-3 py-1.5 focus:outline-none focus:ring-1 focus:ring-[#1e293b]">
+                                <input type="text" id="dashboard-guest-search" onkeyup="filterDashboardGuests(this.value)" placeholder="Search guests..." class="text-sm border border-gray-300 rounded-md px-3 py-1.5 focus:outline-none focus:ring-1 focus:ring-[#1e293b]">
                             </div>
                         </div>
                         <div class="overflow-x-auto">
-                            <table class="w-full text-left text-sm text-gray-600">
+                            <table class="w-full text-left text-sm text-gray-600" id="dashboard-guest-table">
                                 <thead class="bg-slate-50/80 text-[13px] font-semibold uppercase tracking-[0.08em] text-gray-500 border-b border-slate-200">
                                     <tr>
                                         <th class="px-6 py-3">Guest Contact</th>
@@ -142,7 +130,7 @@
                                                     {{ p.full_name[:2].upper() }}
                                                 </div>
                                                 <div>
-                                                    <div class="text-slate-900 font-medium text-sm">{{ p.full_name }}</div>
+                                                    <div class="text-slate-900 font-medium text-sm guest-name">{{ p.full_name }}</div>
                                                     <div class="text-slate-500 text-xs">{{ p.email }}</div>
                                                 </div>
                                             </div>
