@@ -1,23 +1,44 @@
 # Product Requirements Document (PRD)
-## APIIT Kandy Toastmasters CRM
+## APIIT Kandy Club CRM
 
 ### 1. Goal & Vision
-A lightweight, high-speed internal management system built for the Vice President Membership (VPM) and Executive Committee (Exco) of APIIT Kandy Toastmasters. The system streamlines prospective guest tracking, member management, meeting attendance, role history, and executive decision-making through an intuitive, action-oriented dashboard.
+A lightweight, high-speed internal management system built for the Vice President Membership (VPM) and Executive Committee (Exco) of APIIT Kandy Club. The system streamlines prospective guest tracking, member management, meeting attendance, role history, and executive decision-making through an intuitive, action-oriented dashboard.
 
 ---
 
-### 2. Access & Authentication
+### 2. Feature & Implementation Status Summary
+
+| Module | Name | Status | Implemented Components | Pending Deliverables |
+|---|---|---|---|---|
+| **Core** | Access & Auth | ✅ Complete | Passkey verification, session cookie, route guards, login page | Hardened secret loading from env |
+| **Module A** | Executive Dashboard | ✅ 90% Complete | Metric cards, upcoming meeting hero, activity feed, pipeline preview | Quick actions wiring to active modals |
+| **Module B** | Guest & Prospect Pipeline | ✅ Complete | Guest table view, guest creation endpoint, stage progression (`POST /stage`), auto-onboarding, stage history modal, stage filter tabs | — |
+| **Module C** | Member Management | ⏳ 0% Complete | Data schema defined in `members` table | Router `members.py`, member directory UI, renewal tracker |
+| **Module D** | Meeting & Attendance | ✅ Complete | Meeting creation, meeting list with stats, batch attendance logger (`POST /attendance`), interactive check-in UI | — |
+| **Module E** | Roles & History Matrix | ⚠️ 50% Complete | Role catalog schema, role assignment endpoint | Dynamic frequency matrix computation, multi-select UI |
+| **Module F** | Reports & Exports | ⏳ 0% Complete | Data tables ready | Export router, CSV/PDF generator for logs and matrix |
+
+---
+
+### 3. Access & Authentication
+
 - **Access Model:** Simple Exco Passkey authentication.
 - **Session Management:** Users enter a shared Exco passkey stored in `.env`. Once validated, an HTTP-only session cookie grants administrative access across all routes.
+- **Implementation State:**
+  - [x] Passkey validation via `POST /login`
+  - [x] Session cookie persistence using Starlette `SessionMiddleware`
+  - [x] Route protection dependency with HTMX redirect support (`dependencies.py`)
+  - [x] Branded login UI (`login.html`)
 
 ---
 
-### 3. UI/UX Design System & Aesthetics
+### 4. UI/UX Design System & Aesthetics
+
 - **Design Philosophy:** Modern, clean admin UI inspired by **Linear, Notion, and GitHub** (not generic Bootstrap templates).
-- **Brand Palette (Toastmasters Official):**
-  - **Navigation Base:** Loyal Navy (`#002B49` / `#004165`)
-  - **Primary Buttons & Active Items:** True Maroon (`#772432`)
-  - **Accent Underlines & Highlights:** Toastmasters Gold (`#F2DF00`)
+- **Brand Palette:**
+  - **Navigation Base:** Deep Slate (`#0f172a` / `#1e293b`)
+  - **Primary Buttons & Active Items:** Bright Blue (`#2563eb`)
+  - **Accent Underlines & Highlights:** Amber Accent (`#fbbf24`)
   - **Background:** Light Neutral (`#F7F9FA`)
   - **Surface & Cards:** Pure White (`#FFFFFF`) with `14px` border-radius and soft shadow (`0 6px 24px rgba(0,0,0,0.05)`).
 - **Typography Scale:**
@@ -27,52 +48,85 @@ A lightweight, high-speed internal management system built for the Vice Presiden
   - Body: `15px`
 - **Component Patterns:**
   - **Avatar Tables:** Combined initials badge + full name + stacked email layout.
-  - **Polished Empty States:** Custom illustration/emoji (`📭`), friendly microcopy, and a direct CTA button when tables are empty.
+  - **Polished Empty States:** Custom illustration/emoji (`📭`, `📅`, `🎭`), friendly microcopy, and direct CTA buttons when tables are empty.
+  - **Lucide Icons:** Client-side icon rendering with HTMX lifecycle hook (`htmx:afterSettle`).
 
 ---
 
-### 4. Navigation Architecture (Sidebar Shell)
+### 5. Navigation Architecture (Sidebar Shell)
+
 Fixed left sidebar (`w-64`) with Lucide icons, categorized into clear operational domains:
 
-- **Dashboard**
-- **CRM:** Guests, Members, Follow-ups
-- **Meetings:** Attendance, Agenda, Evaluations
-- **Management:** Role Matrix, Reports
-- **Footer:** Settings, Logout
+- **Dashboard:** `/` (✅ Implemented)
+- **CRM:**
+  - Guests: `hx-get="/prospects"` (✅ Implemented)
+  - Members: `hx-get="/members"` (⏳ Pending implementation)
+  - Follow-ups: `hx-get="/follow-ups"` (⏳ Pending implementation)
+- **Meetings:**
+  - Attendance: `hx-get="/meetings"` (✅ Implemented)
+  - Agenda: `hx-get="/agenda"` (⏳ Pending implementation)
+  - Evaluations: `hx-get="/evaluations"` (⏳ Pending implementation)
+- **Management:**
+  - Role Matrix: `hx-get="/roles"` (✅ Implemented)
+  - Reports: `hx-get="/reports"` (⏳ Pending implementation)
+- **Footer:**
+  - Settings: `hx-get="/settings"` (⏳ Pending implementation)
+  - Logout: `/logout` (✅ Implemented)
 
 ---
 
-### 5. Core Functional Modules
+### 6. Core Functional Modules
 
 #### Module A: Executive Dashboard & Quick Actions
-- **Metric Summary Cards:** Real-time counters for Active Members, Total Guests, Active Prospects, and Average Attendance Rate (with division-by-zero protection).
-- **Gold Accent:** Decorative Gold underline (`#F2DF00`, `4px` height) under the main Dashboard title.
-- **Upcoming Meeting Hero Card:** Highlights Date, Theme, Toastmaster of the Day, and Venue.
+- **Metric Summary Cards:** Real-time counters for Active Members, Total Guests, Active Prospects, and Average Attendance Rate (with division-by-zero protection). *(✅ Implemented)*
+- **Gold Accent:** Decorative Gold underline (`#fbbf24`, `4px` height) under the main Dashboard title. *(✅ Implemented)*
+- **Upcoming Meeting Hero Card:** Highlights Date, Theme, Meeting Host, and Venue. *(✅ Implemented)*
 - **Quick Actions Panel:** One-click triggers for heavy meeting-day workflows:
-  - `＋ Add Guest`
-  - `＋ Record Attendance`
-  - `＋ Assign Roles`
-  - `＋ Start Meeting`
-  - `＋ Export Report`
-- **Recent Activity Feed:** Real-time timeline feed showing recent guest registrations, attendance logs, and role updates.
+  - `＋ Add Guest` *(⚠️ In Progress: Modal trigger needs alignment)*
+  - `＋ Record Attendance` *(⏳ Pending: Connect to meeting attendance modal)*
+  - `＋ Assign Roles` *(⏳ Pending: Connect to role assignment modal)*
+  - `＋ Start Meeting` *(⏳ Pending: Live meeting mode view)*
+  - `＋ Export Report` *(⏳ Pending: Report export handler)*
+- **Recent Activity Feed:** Real-time timeline feed showing recent guest registrations, attendance logs, and role updates. *(✅ Implemented)*
 
 #### Module B: Guest & Prospect Pipeline
-- Log new meeting guests (Name, Email, Phone, First Visit Date, Notes).
-- Pipeline Stages: `1st Visit` -> `2nd Visit` -> `Form Sent` -> `Payment Pending` -> `Onboarded`.
-- Dynamic status badges (`Guest` = Sky Blue, `Prospect` = Amber, `Member` = Emerald Green).
+- **Guest Logging:** Log new meeting guests (Name, Email, Phone, First Visit Date, Notes). *(✅ Implemented)*
+- **Pipeline Stages:** `1st Visit` -> `2nd Visit` -> `Form Sent` -> `Payment Pending` -> `Onboarded`. *(✅ Implemented with append-only logging in `prospect_logs`)*
+- **Dynamic Status Badges:** `1st Visit` = Sky Blue, `2nd Visit` = Blue, `Form Sent` = Indigo, `Payment Pending` = Amber, `Onboarded` = Emerald Green. *(✅ Implemented)*
+- **Delivered Features:**
+  - [x] Implemented `POST /prospects/{id}/stage` in `app/routers/prospects.py`.
+  - [x] Inline stage advancement fast-track button and "Update Stage" modal in `partials/prospects.html`.
+  - [x] Automatic member status transition to `'Active'` upon reaching `Onboarded` stage.
+  - [x] Stage progression history timeline modal (`GET /prospects/{id}/history`).
+  - [x] Stage filter tabs (`All`, `1st Visit`, `2nd Visit`, `Form Sent`, `Payment Pending`, `Onboarded`).
 
 #### Module C: Member Management
-- Member profiles (Full Name, Contact Details, Join Date, Status: `Active`/`Inactive`/`Alumni`, Pathways Level).
-- Semi-annual renewal tracking (March & September renewal cycles).
+- **Member Profiles:** Full Name, Contact Details, Join Date, Status (`Active`/`Inactive`/`Alumni`), Pathways Level. *(Schema defined in `members` table)*
+- **Semi-annual Renewal Tracking:** March & September renewal cycle indicators. *(⏳ Pending)*
+- **Remaining Deliverables:**
+  - [ ] Create `app/routers/members.py` with CRUD endpoints.
+  - [ ] Create `app/templates/partials/members.html` with status filter tabs (`All`, `Active`, `Inactive`, `Alumni`).
+  - [ ] Add member edit / Pathways level update modal.
 
 #### Module D: Meeting & Attendance Tracking
-- Create upcoming or past meetings (Meeting #, Date, Theme, TMOD).
-- Batch check-in interface to mark members/guests as `Present`, `Absent`, or `Excused`.
+- **Meeting Records:** Create upcoming or past meetings (Meeting #, Date, Theme, Host). *(✅ Implemented)*
+- **Batch Check-in Interface:** Mark members/guests as `Present`, `Absent`, `Excused`, or `Guest`. *(✅ Implemented)*
+- **Delivered Features:**
+  - [x] Implemented `POST /attendance` batch save endpoint in `app/routers/meetings.py`.
+  - [x] Built interactive attendance check-in table partial (`partials/attendance.html`) with bulk action helpers and live search.
+  - [x] Connected "Mark Attendance" action button in `partials/meetings.html`.
+  - [x] Display real-time attendance counts (`X Present / Y Absent / Z Excused`) per meeting.
 
 #### Module E: Flexible Role Assignments & History Matrix
-- Master catalogue of Toastmasters roles.
-- **Multi-role support:** Allow assigning multiple functional roles to a single member in one meeting (e.g., Timer + Ah-Counter combined).
-- Member Role Frequency Matrix: View role distribution across meetings to ensure equitable assignments.
+- **Master Catalogue of Club Roles:** Pre-populated standard roles (Meeting Host, Topics Master, General Evaluator, Speaker, Timer, Filler Word Counter, Language Evaluator, etc.). *(✅ Implemented in `SCHEMA.sql`)*
+- **Multi-role Support:** Allow assigning multiple functional roles to a single member in one meeting (e.g., Timer + Filler Word Counter combined). *(Schema supports via composite uniqueness)*
+- **Member Role Frequency Matrix:** View role distribution across meetings to ensure equitable assignments. *(⚠️ Stub implemented, matrix query pending)*
+- **Remaining Deliverables:**
+  - [ ] Calculate matrix aggregating role counts per member across past meetings.
+  - [ ] Replace numeric ID inputs in `partials/roles.html` modal with dynamic `<select>` dropdowns.
 
 #### Module F: Reports & Exports
-- Generate and export CSV/PDF reports for guest conversion rates, meeting attendance logs, and member role participation history.
+- **CSV & PDF Report Generation:** Export guest conversion rates, meeting attendance logs, and member role participation history. *(⏳ Pending)*
+- **Remaining Deliverables:**
+  - [ ] Implement `app/routers/reports.py` with CSV streaming response.
+  - [ ] Wire sidebar "Reports" link and dashboard "Export Report" quick action.

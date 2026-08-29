@@ -1,5 +1,5 @@
 # Technical Architecture & Guidelines
-## APIIT Kandy Toastmasters CRM
+## APIIT Kandy Club CRM
 
 ---
 
@@ -7,13 +7,13 @@
 
 | Layer | Technology | Notes |
 |---|---|---|
-| **Language** | Python 3.11+ | — |
+| **Language** | Python 3.11+ | Running on local venv |
 | **Web Framework** | FastAPI | ASGI, async-ready |
 | **Authentication** | Starlette `SessionMiddleware` + `itsdangerous` | Shared Exco passkey stored in `.env`; HTTP-only session cookie |
 | **Template Engine** | Jinja2 | Returns full pages and HTMX partials |
 | **Frontend** | HTMX (v1.9+ via CDN) + Tailwind CSS (via CDN) | No build step required |
-| **Icons** | Lucide Icons (via CDN) | Sidebar & UI icons |
-| **Database** | Supabase (PostgreSQL) | `supabase-py` SDK |
+| **Icons** | Lucide Icons (via CDN) | Dynamic DOM re-init via `htmx:afterSettle` |
+| **Database** | Supabase (PostgreSQL) | Official `supabase-py` SDK |
 | **Static Files** | FastAPI `StaticFiles` | Served from `app/static/` |
 
 ---
@@ -24,33 +24,39 @@
 toastmasters-crm/
 ├── app/
 │   ├── __init__.py
-│   ├── main.py                   # FastAPI app, middleware, root dashboard route
-│   ├── config.py                 # Env vars & Supabase client initialisation
+│   ├── main.py                   # FastAPI app, session middleware, root dashboard aggregation
+│   ├── config.py                 # Environment variables & Supabase client initialization
 │   ├── dependencies.py           # Session authentication dependency (get_current_user)
 │   ├── routers/
 │   │   ├── __init__.py
-│   │   ├── auth.py               # GET /login, POST /login, POST /logout
-│   │   ├── prospects.py          # GET /prospects, POST /prospects, POST /prospects/{id}/stage
-│   │   ├── meetings.py           # GET /meetings, POST /meetings, POST /attendance
-│   │   └── roles.py              # GET /roles, POST /roles, GET /roles/matrix
+│   │   ├── auth.py               # [✅] GET /login, POST /login, GET /logout
+│   │   ├── prospects.py          # [⚠️] GET /prospects, POST /prospects, [⏳] POST /prospects/{id}/stage
+│   │   ├── meetings.py           # [⚠️] GET /meetings, POST /meetings, [⏳] POST /attendance
+│   │   ├── roles.py              # [⚠️] GET /roles, POST /roles/assign, [⏳] GET /roles/matrix
+│   │   ├── members.py            # [⏳] GET /members, POST /members, GET /members/{id} (Upcoming)
+│   │   └── reports.py            # [⏳] GET /reports, GET /reports/export (Upcoming)
 │   ├── templates/
-│   │   ├── base.html             # Layout wrapper (sidebar, topbar, content slot)
-│   │   ├── login.html            # Passkey prompt page
-│   │   ├── index.html            # Main dashboard (metrics, pipeline table, activity feed)
+│   │   ├── base.html             # Shell layout (sidebar, topbar, HTMX hook, Lucide re-init)
+│   │   ├── login.html            # Branded split-screen passkey login page
+│   │   ├── index.html            # Executive dashboard (metrics, upcoming meeting, feed, pipeline)
 │   │   └── partials/
-│   │       ├── prospects.html    # HTMX target: guest pipeline table
-│   │       ├── meetings.html     # HTMX target: meetings & attendance form
-│   │       └── roles.html        # HTMX target: role assignment & matrix view
+│   │       ├── prospects.html    # [✅] HTMX target: guest pipeline table & add-guest modal
+│   │       ├── meetings.html     # [✅] HTMX target: meetings list & add-meeting modal
+│   │       ├── roles.html        # [⚠️] HTMX target: role assignment modal & matrix placeholder
+│   │       ├── members.html      # [⏳] HTMX target: member directory with status filters (Upcoming)
+│   │       └── attendance.html   # [⏳] HTMX target: batch meeting check-in table (Upcoming)
 │   └── static/
 │       └── css/
-│           └── style.css         # Custom overrides on top of Tailwind CDN
+│           └── style.css         # Design system tokens & overrides on top of Tailwind
 ├── .env                          # Secret keys & Supabase credentials (gitignored)
 ├── .env.example                  # Template for required environment variables
 ├── requirements.txt              # Python dependencies
-├── SCHEMA.sql                    # PostgreSQL schema (Supabase)
+├── SCHEMA.sql                    # PostgreSQL schema definition (Supabase)
 ├── PRD.md                        # Product Requirements Document
-├── ARCHITECTURE.md               # This file
-└── AGENT_INSTRUCTIONS.md         # Build roadmap for AI agent execution
+├── ARCHITECTURE.md               # Technical architecture & guidelines (This file)
+├── AGENT.md                      # AI agent operating directives & constraints
+├── AGENT_INSTRUCTIONS.md         # Active build roadmap and execution checklist
+└── .tokensave/                   # Agent context memory and checkpoint logs
 ```
 
 ---
@@ -63,19 +69,20 @@ Browser                     FastAPI (main.py)               Supabase
   │── GET /  ────────────────────>│                              │
   │          SessionMiddleware checks session cookie             │
   │          If no session → redirect to /login                 │
+  │          If HTMX request → HX-Redirect: /login               │
   │                               │                              │
   │── POST /login (passkey) ─────>│                              │
   │          Compare against EXCO_PASSKEY env var               │
   │          On match → set session["authenticated"] = True     │
-  │          Redirect to /                                       │
+  │          Redirect to / (303 See Other)                       │
   │                               │                              │
   │── GET / (authenticated) ─────>│── Supabase queries ────────>│
   │                               │<── Aggregated data ─────────│
   │<── 200 index.html ────────────│                              │
 ```
 
-- **Dependency:** `get_current_user` in `dependencies.py` is injected into all protected routes via `Depends(get_current_user)`.
-- **Logout:** `POST /logout` clears the session and redirects to `/login`.
+- **Authentication Guard:** `get_current_user` in `dependencies.py` checks `request.session.get("authenticated")`. Unauthenticated standard requests receive a `303 See Other` redirect to `/login`; unauthenticated HTMX requests receive `401 Unauthorized` with `HX-Redirect: /login`.
+- **Session Logout:** `GET /logout` clears the session dictionary and redirects to `/login`.
 
 ---
 
@@ -84,168 +91,164 @@ Browser                     FastAPI (main.py)               Supabase
 #### Enum Types
 | Enum | Values |
 |---|---|
-| `member_status` | `Prospect`, `Active`, `Inactive`, `Alumni` |
-| `prospect_stage` | `1st Visit`, `2nd Visit`, `Form Sent`, `Payment Pending`, `Onboarded` |
-| `attendance_status` | `Present`, `Absent`, `Excused`, `Guest` |
+| `member_status` | `'Prospect'`, `'Active'`, `'Inactive'`, `'Alumni'` |
+| `prospect_stage` | `'1st Visit'`, `'2nd Visit'`, `'Form Sent'`, `'Payment Pending'`, `'Onboarded'` |
+| `attendance_status` | `'Present'`, `'Absent'`, `'Excused'`, `'Guest'` |
 
 #### Tables
 
-| Table | Purpose | Key Relationships |
+| Table | Purpose | Key Relationships & Constraints |
 |---|---|---|
-| `members` | Central record for all people (guests → members) | — |
-| `prospect_logs` | Pipeline stage history per member | `member_id → members.id` |
-| `meetings` | Meeting records (number, date, theme) | — |
-| `role_catalog` | Master list of Toastmasters roles | — |
-| `role_assignments` | Links members to roles per meeting (multi-role allowed) | `meeting_id`, `member_id`, `role_id`; UNIQUE per trio |
-| `attendance` | Per-meeting attendance status per member | `meeting_id`, `member_id`; UNIQUE per pair |
+| `members` | Central record for all contacts (guests → prospects → active members) | `id` (PK), `email` (UNIQUE), `status` (`member_status`) |
+| `prospect_logs` | Append-only pipeline stage history per member | `member_id → members.id` (ON DELETE CASCADE), `stage` (`prospect_stage`) |
+| `meetings` | Meeting metadata (number, date, theme) | `id` (PK), `meeting_number` (INT UNIQUE), `meeting_date` (DATE) |
+| `role_catalog` | Master directory of club roles | `id` (PK), `role_name` (UNIQUE), `category` |
+| `role_assignments` | Links members to roles per meeting (multi-role support) | `meeting_id`, `member_id`, `role_id`; `UNIQUE(meeting_id, member_id, role_id)` |
+| `attendance` | Per-meeting check-in record per member | `meeting_id`, `member_id`; `UNIQUE(meeting_id, member_id)` |
 
-#### Key Design Decisions
-- A single `members` table handles all lifecycle stages; `status` (`member_status` enum) drives filtering.
-- `prospect_logs` is append-only stage history — the latest row per `member_id` represents the current pipeline stage.
-- `role_assignments` allows multiple rows per `(meeting_id, member_id)` with different `role_id` values, supporting combined roles (e.g., Timer + Ah-Counter).
-- `UNIQUE(meeting_id, member_id, role_id)` on `role_assignments` prevents duplicate role entries.
-- Attendance tracking uses `UNIQUE(meeting_id, member_id)` to prevent double entries.
+#### Data Flow & Aggregation Decisions
+- **Single Contact Table (`members`):** All people exist in `members`. A person starts with `status = 'Prospect'`, and transitions to `'Active'` upon onboarding.
+- **Append-Only Pipeline History (`prospect_logs`):** Every stage transition adds a row. The latest row sorted by `created_at DESC` represents the active stage.
+- **Multi-Role Assignment:** Because the unique constraint is composite on `(meeting_id, member_id, role_id)`, a single member can hold multiple distinct roles in the same meeting (e.g. Timer and Speech Evaluator).
 
 ---
 
-### 5. Request/Response Patterns
+### 5. Request & Response Patterns
 
 #### Full-Page Navigation
-- Sidebar links perform standard `GET` requests.
-- The root `/` route aggregates all dashboard data in a single handler and renders `index.html`.
+- The root `/` route queries Supabase in sequence to assemble metric counters, upcoming meeting details, recent activity logs, and pipeline preview data before returning `index.html`.
 
 #### HTMX Partial Rendering
-- Actions within each module (add guest, update stage, record attendance, assign role) use HTMX `hx-post` / `hx-get` targeting a named `<div>` in `index.html`.
-- The router handlers return Jinja2 `TemplateResponse` pointing to a file inside `templates/partials/`.
+- Sidebar navigation and module switches issue `hx-get` targeting `#main-content`.
+- Modal forms issue `hx-post` targeting `#main-content` and return an updated table partial from `app/templates/partials/`.
+- All HTMX endpoints return Jinja2 `TemplateResponse` referencing files inside `app/templates/partials/`.
 
-#### Dashboard Data Aggregation (`main.py /`)
-The root route performs several Supabase queries in sequence:
-1. **Active Members count** — `members` table, `status = Active`
-2. **Guest count** — `members` table, `status = Prospect`
-3. **Active Prospects count** — latest stage per `member_id` in `prospect_logs`, excluding `Onboarded`
-4. **Attendance Rate** — `(Present records / total member-meeting records) * 100`
-5. **Upcoming Meeting** — latest row from `meetings`, with TMOD resolved via `role_assignments`
-6. **Recent Activity Feed** — latest 5 entries each from `prospect_logs`, `attendance`, and `role_assignments`; merged and sorted by timestamp, trimmed to top 5
-7. **Guest Pipeline Table** — `Prospect`-status members with latest `prospect_stage` applied
+#### Out-of-Band (OOB) Metric Updates
+- Future mutations (such as adding a guest or marking attendance) will return `hx-swap-oob="true"` blocks targeting `#stat-members`, `#stat-guests`, `#stat-prospects`, and `#stat-attendance` to keep dashboard numbers synchronized without a full reload.
 
 ---
 
-### 6. Router Endpoints Reference
+### 6. Router Endpoints Reference & Status
 
 #### `auth.py`
-| Method | Path | Description |
-|---|---|---|
-| `GET` | `/login` | Render login page |
-| `POST` | `/login` | Validate passkey, set session, redirect |
-| `POST` | `/logout` | Clear session, redirect to `/login` |
+| Method | Path | Status | Description |
+|---|---|---|---|
+| `GET` | `/login` | ✅ Complete | Render login page or redirect if authenticated |
+| `POST` | `/login` | ✅ Complete | Validate passkey, set session, redirect to `/` |
+| `GET` | `/logout` | ✅ Complete | Clear session cookie, redirect to `/login` |
 
 #### `prospects.py`
-| Method | Path | Description |
-|---|---|---|
-| `GET` | `/prospects` | Render guest pipeline partial |
-| `POST` | `/prospects` | Add new guest/prospect |
-| `POST` | `/prospects/{id}/stage` | Update a prospect's pipeline stage |
+| Method | Path | Status | Description |
+|---|---|---|---|
+| `GET` | `/prospects` | ✅ Complete | Render guest pipeline table partial |
+| `POST` | `/prospects` | ✅ Complete | Insert guest into `members` & add initial stage log |
+| `POST` | `/prospects/{id}/stage` | ✅ Complete | Progress prospect stage, append notes, auto-onboard to `Active` |
+| `GET` | `/prospects/{id}/history` | ✅ Complete | Render stage timeline history modal partial |
+| `GET` | `/prospects/new` | ✅ Complete | Render add-guest modal partial (for quick actions) |
 
 #### `meetings.py`
-| Method | Path | Description |
-|---|---|---|
-| `GET` | `/meetings` | Render meetings & attendance partial |
-| `POST` | `/meetings` | Create a new meeting record |
-| `POST` | `/attendance` | Batch-record attendance for a meeting |
+| Method | Path | Status | Description |
+|---|---|---|---|
+| `GET` | `/meetings` | ✅ Complete | Render meetings list partial with attendance stats |
+| `POST` | `/meetings` | ✅ Complete | Create new meeting record |
+| `GET` | `/meetings/{id}/attendance` | ✅ Complete | Render batch attendance check-in matrix view |
+| `GET` | `/meetings/attendance` | ✅ Complete | Quick action helper for latest meeting attendance |
+| `GET` | `/meetings/new` | ✅ Complete | Render standalone Add Meeting modal partial |
+| `POST` | `/attendance` | ✅ Complete | Batch-record attendance statuses for a meeting |
 
 #### `roles.py`
-| Method | Path | Description |
-|---|---|---|
-| `GET` | `/roles` | Render role assignment partial |
-| `POST` | `/roles` | Assign a role to a member for a meeting |
-| `GET` | `/roles/matrix` | Render role frequency matrix view |
+| Method | Path | Status | Description |
+|---|---|---|---|
+| `GET` | `/roles` | ⚠️ Stub | Render role matrix partial (matrix calculation pending) |
+| `POST` | `/roles/assign` | ✅ Complete | Insert `role_assignment` record |
+| `GET` | `/roles/matrix` | ⏳ Pending | Dedicated endpoint for matrix frequency data |
+
+#### `members.py` *(Upcoming)*
+| Method | Path | Status | Description |
+|---|---|---|---|
+| `GET` | `/members` | ⏳ Pending | Render member directory partial with status filter |
+| `POST` | `/members` | ⏳ Pending | Add / edit member record |
+| `GET` | `/members/{id}` | ⏳ Pending | Member detail & Pathways profile view |
+
+#### `reports.py` *(Upcoming)*
+| Method | Path | Status | Description |
+|---|---|---|---|
+| `GET` | `/reports` | ⏳ Pending | Render reports overview page |
+| `GET` | `/reports/export` | ⏳ Pending | Stream CSV export of attendance/guests/roles |
 
 ---
 
-### 7. UI/UX Design System
+### 7. UI/UX Design System Tokens
 
 #### Brand Palette
-| Token | Hex | Usage |
+| Token | Hex Value | Purpose |
 |---|---|---|
-| Loyal Navy | `#002B49` / `#004165` | Sidebar background |
-| True Maroon | `#772432` | Primary buttons, active nav items |
-| Toastmasters Gold | `#F2DF00` | Accent underlines, highlights |
-| Light Neutral | `#F7F9FA` | Page background |
-| Pure White | `#FFFFFF` | Cards & surfaces |
+| Deep Slate | `#0f172a` / `#1e293b` | Sidebar, dark panels, headers |
+| Bright Blue | `#2563eb` | Primary buttons (`.btn-primary`), active nav indicators |
+| Bright Blue Hover | `#1d4ed8` | Button hover state |
+| Amber Accent | `#fbbf24` | Underline accents (`.gold-underline`), badges |
+| Light Neutral | `#F7F9FA` | Body page background |
+| Pure White | `#FFFFFF` | Card surfaces (`.card`) |
+| Border Slate | `#E5E9E8` | Card borders and divider lines |
 
-#### Card Style
-- `border-radius: 14px`
-- `box-shadow: 0 6px 24px rgba(0,0,0,0.05)`
-
-#### Typography Scale
-| Role | Size | Weight |
-|---|---|---|
-| Page Title | `32px` | Bold (700) |
-| Section Title | `20px` | Semibold (600) |
-| Table Headers | `13px` | Semibold (600) / Uppercase / `letter-spacing: 0.08em` |
-| Body | `15px` | Regular (400) |
-
-#### Status Badge Colours
-| Status | Colour |
-|---|---|
-| Guest / 1st Visit | Sky Blue |
-| Prospect (active pipeline) | Amber |
-| Member / Onboarded | Emerald Green |
+#### Card & Component Rules
+- **Cards:** `.card` with `border-radius: 14px`, `box-shadow: 0 6px 24px rgba(0,0,0,0.05)`, border `1px solid #E5E9E8`.
+- **Buttons:** `.btn-primary` with bright blue background, white text, `8px` rounded corners, and subtle hover elevation.
+- **Empty States:** Renders standard empty card with emoji (`📭`, `📅`, `🎭`), friendly copy, and primary action button.
 
 ---
 
 ### 8. Environment Variables
 
-| Variable | Required | Description |
-|---|---|---|
-| `EXCO_PASSKEY` | ✅ | Shared passkey for Exco access |
-| `SESSION_SECRET` | ✅ | Secret key for `SessionMiddleware` / `itsdangerous` |
-| `SUPABASE_URL` | ✅ | Supabase project URL |
-| `SUPABASE_KEY` | ✅ | Supabase `anon` or `service_role` API key |
-
-Defined in `.env` (gitignored). See `.env.example` for the template.
+| Variable | Required | Description | Current Status |
+|---|---|---|---|
+| `EXCO_PASSKEY` | ✅ | Shared passkey for Exco administrative access | Configured in `.env` |
+| `SESSION_SECRET` | ✅ | Secret key used by `SessionMiddleware` | Needs dynamic binding in `main.py` |
+| `SUPABASE_URL` | ✅ | Supabase project URL (`https://xyz.supabase.co`) | Configured in `.env` |
+| `SUPABASE_KEY` | ✅ | Supabase `anon` public key | Configured in `.env` |
 
 ---
 
 ### 9. Python Dependencies (`requirements.txt`)
 
-| Package | Purpose |
-|---|---|
-| `fastapi` | Web framework |
-| `uvicorn` | ASGI server |
-| `jinja2` | HTML templating |
-| `supabase` | Supabase Python SDK |
-| `python-dotenv` | `.env` file loading |
-| `python-multipart` | Form data parsing |
-| `itsdangerous` | Session cookie signing |
+- `fastapi` (Web framework)
+- `uvicorn` (ASGI web server)
+- `jinja2` (Server-side HTML rendering)
+- `supabase` (Supabase Python client SDK)
+- `python-dotenv` (Environment variable loader)
+- `python-multipart` (Form data parsing)
+- `itsdangerous` (Session cryptographic signing)
 
 ---
 
-### 10. Running Locally
+### 10. Technical Gap Analysis & Audit Findings
 
-```bash
-# 1. Create and activate virtual environment
-python -m venv venv
-venv\Scripts\activate        # Windows
-# source venv/bin/activate   # macOS/Linux
+During the codebase audit, the following technical gaps were documented:
 
-# 2. Install dependencies
-pip install -r requirements.txt
+1. **Dashboard Quick Action Handlers:**
+   - The Quick Action buttons on `index.html` use `hx-get` targeting `/prospects/new`, `/meetings/attendance`, `/roles/assign`, `/meetings/live`, and `/reports/export`. These routes either do not exist or expect `POST` methods.
+   - *Action:* Create lightweight modal endpoints or unify them with a global modal trigger.
 
-# 3. Configure environment
-cp .env.example .env
-# Edit .env with your Supabase credentials and passkey
+2. **Prospect Stage Workflow:**
+   - The UI displays pipeline stages (`1st Visit`, `2nd Visit`, `Form Sent`, `Payment Pending`, `Onboarded`), but there is no handler in `prospects.py` to transition an existing prospect between stages.
+   - *Action:* Implement `POST /prospects/{id}/stage` and wire status-click actions.
 
-# 4. Start the development server
-uvicorn app.main:app --reload
-# App available at http://127.0.0.1:8000
-```
+3. **Attendance Logging Implementation:**
+   - `meetings.py` creates meetings, but attendance recording (`POST /attendance`) and the check-in matrix view are unimplemented.
+   - *Action:* Implement batch attendance submission and interactive checkbox check-in view.
+
+4. **Dynamic Role Frequency Matrix:**
+   - `roles.py` returns `matrix: []`. The UI shows a table shell with "No role history found".
+   - *Action:* Write aggregation query to compute `(member_name, role_name) -> count` across meetings.
+
+5. **Session Secret Environment Binding:**
+   - `main.py` uses hardcoded `secret_key="super-secret-exco-key"` instead of `os.getenv("SESSION_SECRET")`.
+   - *Action:* Bind `SESSION_SECRET` from `.env` with a secure fallback.
 
 ---
 
-### 11. Developer & AI Agent Guidelines
+### 11. Developer & AI Agent Operating Directives
 
-- **AI Agent Directives:** Refer to [AGENT.md](file:///c:/Users/panth/Documents/toastmasters-crm/AGENT.md) for critical constraints, including HTMX Protocol rules, UI/UX Design System standards, and session context retention directives.
-- **Implementation Roadmap:** Refer to [AGENT_INSTRUCTIONS.md](file:///c:/Users/panth/Documents/toastmasters-crm/AGENT_INSTRUCTIONS.md) for the active build state and execution checklist.
-- **Context Retention:** Respect the `.tokensave` protocol for capturing session checkpoints and restoring context.
-
+- **AI Agent Directives:** Refer to [AGENT.md](file:///c:/Users/panth/Documents/toastmasters-crm/AGENT.md) for HTMX protocol rules, UI token constraints, and `.tokensave` context management.
+- **Execution Checklist:** Refer to [AGENT_INSTRUCTIONS.md](file:///c:/Users/panth/Documents/toastmasters-crm/AGENT_INSTRUCTIONS.md) for task status and immediate priorities.
+- **Checkpoints:** Update `.tokensave` after completing key sub-tasks.

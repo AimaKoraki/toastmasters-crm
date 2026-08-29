@@ -1,6 +1,6 @@
 # Workspace Rules for AI Agent Execution
 
-You are working in the Toastmasters CRM repository. To ensure high-quality and consistent codebase modifications, you must adhere to the rules defined below.
+You are working in the Club CRM repository. To ensure high-quality and consistent codebase modifications, you must adhere to the rules defined below.
 
 ### 1. Mandatory Context Gathering
 Before starting any coding task, plan, or implementation:
@@ -15,4 +15,4 @@ Before starting any coding task, plan, or implementation:
 ### 3. Technical Constraints
 - **HTMX calls** must only return HTML partials from `app/templates/partials/`, never raw JSON.
 - **Lucide Icons** must be re-initialized when elements are dynamically rendered by HTMX.
-- **UI/UX Design:** Adhere strictly to the Toastmasters brand palette (Loyal Navy, True Maroon, Toastmasters Gold) and card/typography scales.
+- **UI/UX Design:** Adhere strictly to the standard palette (Slate, Blue, Amber) and card/typography scales.

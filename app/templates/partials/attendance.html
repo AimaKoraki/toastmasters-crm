@@ -1,0 +1,183 @@
+<div class="space-y-6">
+    <!-- Header with Meeting Info, Back Button & Save CTA -->
+    <div class="bg-white p-6 rounded-[14px] border border-[#E5E9E8] shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div>
+            <div class="flex items-center gap-3">
+                <button hx-get="/meetings" hx-target="#main-content" class="p-1.5 text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition" title="Back to Meetings">
+                    <i data-lucide="arrow-left" class="w-5 h-5"></i>
+                </button>
+                <div>
+                    <h2 class="text-[22px] font-bold text-gray-900 tracking-tight flex items-center gap-2">
+                        <span>Attendance Check-in: Meeting #{{ meeting.meeting_number if meeting else meeting_id }}</span>
+                        {% if meeting and meeting.theme %}
+                        <span class="text-sm font-normal text-slate-500 italic">"{{ meeting.theme }}"</span>
+                        {% endif %}
+                    </h2>
+                    <div class="flex items-center gap-4 mt-1 text-xs text-slate-500 font-mono">
+                        <span class="flex items-center gap-1">
+                            <i data-lucide="calendar" class="w-3.5 h-3.5 text-slate-400"></i>
+                            {{ meeting.meeting_date if meeting else 'Date TBA' }}
+                        </span>
+                        <span class="flex items-center gap-1">
+                            <i data-lucide="users" class="w-3.5 h-3.5 text-slate-400"></i>
+                            {{ members|length }} people in roster
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-3 w-full md:w-auto justify-end">
+            <button type="button" hx-get="/meetings" hx-target="#main-content" class="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-lg transition">
+                Cancel
+            </button>
+            <button type="button" onclick="document.getElementById('batch-attendance-form').requestSubmit()" class="btn-primary">
+                <i data-lucide="check-check" class="w-4 h-4"></i> Save Attendance
+            </button>
+        </div>
+    </div>
+
+    <!-- Quick Action Controls & Real-Time Search -->
+    <div class="bg-white p-4 rounded-[12px] border border-[#E5E9E8] shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <!-- Quick Bulk Selectors -->
+        <div class="flex items-center gap-2 flex-wrap">
+            <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider mr-1">Bulk Set:</span>
+            <button type="button" onclick="bulkSetStatus('Present')" class="px-2.5 py-1 text-xs font-semibold rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 transition">
+                All Present
+            </button>
+            <button type="button" onclick="bulkSetStatus('Absent')" class="px-2.5 py-1 text-xs font-semibold rounded-lg bg-red-50 text-red-700 border border-red-200 hover:bg-red-100 transition">
+                All Absent
+            </button>
+            <button type="button" onclick="bulkSetStatus('Excused')" class="px-2.5 py-1 text-xs font-semibold rounded-lg bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100 transition">
+                All Excused
+            </button>
+        </div>
+
+        <!-- Live Roster Search -->
+        <div class="relative w-full md:w-64">
+            <i data-lucide="search" class="w-4 h-4 absolute left-3 top-2.5 text-slate-400"></i>
+            <input type="text" id="roster-search" onkeyup="filterRosterTable()" placeholder="Search member name..."
+                   class="w-full pl-9 pr-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:bg-white transition">
+        </div>
+    </div>
+
+    <!-- Attendance Form & Member Table -->
+    <form id="batch-attendance-form" hx-post="/attendance" hx-target="#main-content" class="card overflow-hidden">
+        <input type="hidden" name="meeting_id" value="{{ meeting.id if meeting else meeting_id }}">
+
+        <div class="overflow-x-auto">
+            <table class="w-full text-left text-sm text-gray-600" id="roster-table">
+                <thead class="bg-slate-50 text-[13px] font-semibold uppercase tracking-[0.08em] text-slate-500 border-b border-slate-200">
+                    <tr>
+                        <th class="px-6 py-3.5">Member / Guest</th>
+                        <th class="px-6 py-3.5">Member Type</th>
+                        <th class="px-6 py-3.5 text-center">Attendance Status</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100">
+                    {% for m in members %}
+                    <tr class="hover:bg-slate-50/70 transition-colors roster-row">
+                        <!-- Member Info -->
+                        <td class="px-6 py-3.5">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-9 h-9 rounded-full bg-slate-100 text-slate-700 font-bold text-xs flex items-center justify-center shrink-0 border border-slate-200 shadow-sm">
+                                    {{ m.full_name[:2].upper() }}
+                                </div>
+                                <div>
+                                    <div class="text-slate-900 font-semibold text-sm roster-name">{{ m.full_name }}</div>
+                                    <div class="text-slate-500 text-xs">{{ m.email }}</div>
+                                </div>
+                            </div>
+                        </td>
+
+                        <!-- Member Type Badge -->
+                        <td class="px-6 py-3.5">
+                            <span class="px-2.5 py-0.5 text-xs font-semibold rounded-full border
+                                {% if m.member_type == 'Active' %}bg-emerald-50 text-emerald-700 border-emerald-200
+                                {% elif m.member_type == 'Prospect' %}bg-sky-50 text-sky-700 border-sky-200
+                                {% else %}bg-slate-50 text-slate-700 border-slate-200{% endif %}">
+                                {{ m.member_type }}
+                            </span>
+                        </td>
+
+                        <!-- Segmented Status Radios -->
+                        <td class="px-6 py-3.5">
+                            <div class="flex items-center justify-center gap-1 bg-slate-100 p-1 rounded-xl border border-slate-200 max-w-sm mx-auto">
+                                {% for st in statuses %}
+                                <label class="flex-1 cursor-pointer">
+                                    <input type="radio" name="status_{{ m.id }}" value="{{ st }}"
+                                           class="peer sr-only status-radio"
+                                           data-status="{{ st }}"
+                                           {% if m.status == st %}checked{% endif %}>
+                                    <div class="text-center py-1.5 px-2.5 text-xs font-semibold rounded-lg transition-all text-slate-600
+                                                peer-checked:shadow-sm
+                                                {% if st == 'Present' %}peer-checked:bg-emerald-500 peer-checked:text-white
+                                                {% elif st == 'Absent' %}peer-checked:bg-red-500 peer-checked:text-white
+                                                {% elif st == 'Excused' %}peer-checked:bg-amber-500 peer-checked:text-white
+                                                {% elif st == 'Guest' %}peer-checked:bg-sky-500 peer-checked:text-white
+                                                {% endif %}">
+                                        {{ st }}
+                                    </div>
+                                </label>
+                                {% endfor %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="3" class="py-16 text-center">
+                            <div class="flex flex-col items-center justify-center space-y-3">
+                                <div class="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center text-3xl shadow-inner">
+                                    👥
+                                </div>
+                                <h4 class="text-[18px] font-semibold text-slate-900">No members or guests found</h4>
+                                <p class="text-[14px] text-slate-500 max-w-sm">
+                                    Add members or log meeting guests first to record attendance.
+                                </p>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Submit Footer -->
+        <div class="p-4 bg-slate-50 border-t border-slate-100 flex justify-between items-center">
+            <span class="text-xs text-slate-500">
+                Clicking save will update attendance records in real time.
+            </span>
+            <button type="submit" class="btn-primary">
+                <i data-lucide="check-check" class="w-4 h-4"></i> Save Attendance
+            </button>
+        </div>
+    </form>
+</div>
+
+<script>
+function bulkSetStatus(statusVal) {
+    const radios = document.querySelectorAll(`.status-radio[data-status="${statusVal}"]`);
+    radios.forEach(radio => {
+        // Only set for visible rows if filtered
+        const row = radio.closest('.roster-row');
+        if (row && row.style.display !== 'none') {
+            radio.checked = true;
+        }
+    });
+}
+
+function filterRosterTable() {
+    const input = document.getElementById('roster-search');
+    const filter = input.value.toLowerCase();
+    const rows = document.querySelectorAll('.roster-row');
+
+    rows.forEach(row => {
+        const name = row.querySelector('.roster-name').textContent.toLowerCase();
+        if (name.includes(filter)) {
+            row.style.display = '';
+        } else {
+            row.style.display = 'none';
+        }
+    });
+}
+</script>

@@ -1,5 +1,5 @@
 # AI Agent Instructions & Operating System (`AGENT.md`)
-## APIIT Kandy Toastmasters CRM
+## APIIT Kandy Club CRM
 
 > **PRIMARY OPERATING DIRECTIVE:** Read this document and check the `.tokensave` file/directory before executing any task or modifying code in this repository.
 
@@ -45,9 +45,9 @@ To prevent context loss across agent sessions or token budget resets, adhere str
 
 ### B. UI & Design System Rules (Linear / Notion Style)
 1. **Color Variables:**
-   - Loyal Navy (`#002B49` / `#004165`): Navigation background and secondary text.
-   - True Maroon (`#772432`): Primary buttons (`.btn-primary`), active menu items, and key numbers.
-   - Toastmasters Gold (`#F2DF00`): Underlines (`.gold-underline`), badges, and subtle hover highlights. Never use as a solid main background.
+   - Deep Slate (`#0f172a` / `#1e293b`): Navigation background and secondary text.
+   - Bright Blue (`#2563eb`): Primary buttons (`.btn-primary`), active menu items, and key numbers.
+   - Amber Accent (`#fbbf24`): Underlines (`.gold-underline`), badges, and subtle hover highlights. Never use as a solid main background.
    - Surface (`#FFFFFF`) / Background (`#F7F9FA`): Card containers and page body.
 2. **Typography Scale:**
    - Dashboard Title: `32px` / Bold (700) with `.gold-underline`

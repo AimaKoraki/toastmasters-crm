@@ -6,7 +6,7 @@ from app.routers import auth, prospects, meetings, roles
 from app.dependencies import get_current_user
 from fastapi import Depends
 
-app = FastAPI(title="Toastmasters CRM")
+app = FastAPI(title="Club CRM")
 
 # Add Session Middleware
 app.add_middleware(SessionMiddleware, secret_key="super-secret-exco-key")
@@ -84,16 +84,16 @@ def read_root(request: Request, user=Depends(get_current_user)):
             if meetings_res.data:
                 upcoming_meeting = meetings_res.data[0]
                 upcoming_meeting["venue"] = "APIIT Kandy Campus"
-                upcoming_meeting["tmod"] = "TBD"
+                upcoming_meeting["host"] = "TBD"
                 
-                # Fetch TMOD
+                # Fetch Host
                 roles_res = supabase.table("role_assignments").select("member_id, role_catalog(role_name), members(full_name)").eq("meeting_id", upcoming_meeting["id"]).execute()
                 for r in roles_res.data:
                     role_cat = r.get("role_catalog")
-                    if role_cat and role_cat.get("role_name") == "Toastmaster of the Day (TMOD)":
+                    if role_cat and role_cat.get("role_name") == "Meeting Host":
                         mem = r.get("members")
                         if mem:
-                            upcoming_meeting["tmod"] = mem.get("full_name", "TBD")
+                            upcoming_meeting["host"] = mem.get("full_name", "TBD")
                         break
         except Exception:
             pass

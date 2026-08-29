@@ -1,97 +1,300 @@
-<div class="card card-hover overflow-hidden">
-    <div class="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
-        <h3 class="text-[20px] font-semibold text-gray-900">Guests & Prospects Pipeline</h3>
+<div class="space-y-6">
+    <!-- Header with Title, Stats & CTA -->
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-6 rounded-[14px] border border-[#E5E9E8] shadow-sm">
+        <div>
+            <div class="flex items-center gap-3">
+                <h2 class="text-[24px] font-bold text-gray-900 tracking-tight">Guest &amp; Prospect Pipeline</h2>
+                <span class="px-2.5 py-0.5 text-xs font-semibold rounded-full bg-blue-50 text-blue-700 border border-blue-200">
+                    {{ prospects|length }} in pipeline
+                </span>
+            </div>
+            <p class="text-sm text-slate-500 mt-1">
+                Track visitors across conversion stages: 1st Visit → 2nd Visit → Form Sent → Payment Pending → Onboarded.
+            </p>
+        </div>
         <button onclick="document.getElementById('add-prospect-modal').classList.remove('hidden')" 
-                class="bg-[#772432] hover:bg-[#5c1c27] text-white font-medium shadow-sm transition-colors px-4 py-2 rounded-[12px]">
-            + New Guest
+                class="btn-primary shrink-0 shadow-sm hover:shadow">
+            <i data-lucide="user-plus" class="w-4 h-4"></i> ＋ Add New Guest
         </button>
     </div>
-    <div class="overflow-x-auto">
-        <table class="w-full text-left text-sm text-gray-600">
-            <thead class="bg-slate-50/80 text-[13px] font-semibold uppercase tracking-[0.08em] text-gray-500 border-b border-slate-200">
-                <tr>
-                    <th class="px-6 py-3">Guest Contact</th>
-                    <th class="px-6 py-3">Phone</th>
-                    <th class="px-6 py-3">Joined Date</th>
-                    <th class="px-6 py-3">Status</th>
-                    <th class="px-6 py-3">Actions</th>
-                </tr>
-            </thead>
-            <tbody class="divide-y divide-gray-100">
-                {% for p in prospects %}
-                <tr class="hover:bg-slate-50/60 transition-colors">
-                    <td class="px-6 py-4">
-                        <div class="flex items-center space-x-3">
-                            <div class="bg-slate-200 text-slate-700 font-bold text-xs flex items-center justify-center shrink-0 w-9 h-9 rounded-full">
-                                {{ p.full_name[:2].upper() }}
+
+    <!-- Stage Filter Tabs & Search -->
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 bg-white p-3 rounded-[12px] border border-[#E5E9E8]">
+        <!-- Stage Filters -->
+        <div class="flex items-center gap-1 overflow-x-auto pb-1 md:pb-0 text-sm">
+            <button hx-get="/prospects?stage=all" hx-target="#main-content"
+                    class="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all {% if active_stage == 'all' or not active_stage %}bg-[#2563eb] text-white shadow-sm{% else %}text-slate-600 hover:bg-slate-100{% endif %}">
+                All Guests
+            </button>
+            {% for s in stages %}
+            <button hx-get="/prospects?stage={{ s }}" hx-target="#main-content"
+                    class="px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all {% if active_stage == s %}bg-[#2563eb] text-white shadow-sm{% else %}text-slate-600 hover:bg-slate-100{% endif %}">
+                {{ s }}
+            </button>
+            {% endfor %}
+        </div>
+
+        <!-- Quick Search -->
+        <div class="relative w-full md:w-64">
+            <i data-lucide="search" class="w-4 h-4 absolute left-3 top-2.5 text-slate-400"></i>
+            <input type="text" id="prospect-search" onkeyup="filterProspectTable()" placeholder="Filter by name..."
+                   class="w-full pl-9 pr-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:bg-white transition">
+        </div>
+    </div>
+
+    <!-- Pipeline Table Card -->
+    <div class="card overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full text-left text-sm text-gray-600" id="prospects-table">
+                <thead class="bg-slate-50 text-[13px] font-semibold uppercase tracking-[0.08em] text-slate-500 border-b border-slate-200">
+                    <tr>
+                        <th class="px-6 py-3.5">Guest Contact</th>
+                        <th class="px-6 py-3.5">Phone</th>
+                        <th class="px-6 py-3.5">Pipeline Stage</th>
+                        <th class="px-6 py-3.5">Latest Notes</th>
+                        <th class="px-6 py-3.5">Last Contact</th>
+                        <th class="px-6 py-3.5 text-right">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100">
+                    {% for p in prospects %}
+                    <tr class="hover:bg-slate-50/70 transition-colors prospect-row">
+                        <!-- Guest Info & Avatar -->
+                        <td class="px-6 py-4">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-9 h-9 rounded-full bg-slate-100 text-slate-700 font-bold text-xs flex items-center justify-center shrink-0 border border-slate-200 shadow-sm">
+                                    {{ p.full_name[:2].upper() }}
+                                </div>
+                                <div>
+                                    <div class="text-slate-900 font-semibold text-sm prospect-name">{{ p.full_name }}</div>
+                                    <div class="text-slate-500 text-xs flex items-center gap-1 mt-0.5">
+                                        <i data-lucide="mail" class="w-3 h-3 text-slate-400"></i>
+                                        <span>{{ p.email }}</span>
+                                    </div>
+                                </div>
                             </div>
-                            <div>
-                                <div class="text-slate-900 font-medium text-sm">{{ p.full_name }}</div>
-                                <div class="text-slate-500 text-xs">{{ p.email }}</div>
+                        </td>
+
+                        <!-- Phone -->
+                        <td class="px-6 py-4 text-slate-600 text-xs font-mono">
+                            {{ p.phone or '—' }}
+                        </td>
+
+                        <!-- Pipeline Stage Badge & Quick Advance -->
+                        <td class="px-6 py-4">
+                            <div class="flex flex-col gap-1.5 items-start">
+                                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs rounded-full border font-semibold
+                                    {% if p.stage == '1st Visit' %}bg-sky-50 text-sky-700 border-sky-200
+                                    {% elif p.stage == '2nd Visit' %}bg-blue-50 text-blue-700 border-blue-200
+                                    {% elif p.stage == 'Form Sent' %}bg-indigo-50 text-indigo-700 border-indigo-200
+                                    {% elif p.stage == 'Payment Pending' %}bg-amber-50 text-amber-800 border-amber-200
+                                    {% elif p.stage == 'Onboarded' %}bg-emerald-50 text-emerald-700 border-emerald-200
+                                    {% else %}bg-slate-50 text-slate-700 border-slate-200{% endif %}">
+                                    <span class="w-1.5 h-1.5 rounded-full 
+                                        {% if p.stage == '1st Visit' %}bg-sky-500
+                                        {% elif p.stage == '2nd Visit' %}bg-blue-500
+                                        {% elif p.stage == 'Form Sent' %}bg-indigo-500
+                                        {% elif p.stage == 'Payment Pending' %}bg-amber-500
+                                        {% elif p.stage == 'Onboarded' %}bg-emerald-500
+                                        {% else %}bg-slate-400{% endif %}">
+                                    </span>
+                                    {{ p.stage }}
+                                </span>
+
+                                {% if p.next_stage %}
+                                <form hx-post="/prospects/{{ p.id }}/stage" hx-target="#main-content" class="inline-block">
+                                    <input type="hidden" name="stage" value="{{ p.next_stage }}">
+                                    <input type="hidden" name="notes" value="Fast-tracked to {{ p.next_stage }}">
+                                    <button type="submit" class="text-[11px] text-blue-600 hover:text-blue-800 hover:underline flex items-center gap-1 font-medium transition">
+                                        Advance to {{ p.next_stage }} <i data-lucide="arrow-right" class="w-3 h-3"></i>
+                                    </button>
+                                </form>
+                                {% endif %}
                             </div>
-                        </div>
-                    </td>
-                    <td class="px-6 py-4 text-slate-600 text-sm font-mono">{{ p.phone or 'N/A' }}</td>
-                    <td class="px-6 py-4 text-slate-600 text-sm">{{ p.created_at[:10] if p.created_at else '' }}</td>
-                    <td class="px-6 py-4">
-                        <span class="px-2.5 py-1 text-xs rounded-full border font-medium
-                            {% if p.status == 'Prospect' %}bg-amber-100 text-amber-800 border-amber-200
-                            {% elif p.status == 'Guest' %}bg-sky-100 text-sky-800 border-sky-200
-                            {% elif p.status == 'Active' %}bg-emerald-100 text-emerald-800 border-emerald-200
-                            {% else %}bg-gray-50 text-gray-700 border-gray-200{% endif %}">
-                            {{ p.status }}
-                        </span>
-                    </td>
-                    <td class="px-6 py-4">
-                        <button class="text-slate-400 hover:text-slate-700 transition-colors">
-                            <i data-lucide="more-horizontal" class="w-4 h-4"></i>
-                        </button>
-                    </td>
-                </tr>
-                {% else %}
-                <tr>
-                    <td colspan="5" class="py-12 text-center">
-                        <div class="flex flex-col items-center justify-center space-y-3">
-                            <div class="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center text-2xl shadow-inner">
-                                📭
+                        </td>
+
+                        <!-- Notes Preview -->
+                        <td class="px-6 py-4 text-slate-600 text-xs max-w-xs truncate">
+                            {{ p.notes or 'No notes logged.' }}
+                        </td>
+
+                        <!-- Last Contacted / Created -->
+                        <td class="px-6 py-4 text-slate-500 text-xs whitespace-nowrap">
+                            {{ p.last_contacted[:10] if p.last_contacted else '—' }}
+                        </td>
+
+                        <!-- Actions (Update Stage Modal + History) -->
+                        <td class="px-6 py-4 text-right">
+                            <div class="flex items-center justify-end gap-2">
+                                <button onclick="openUpdateModal('{{ p.id }}', '{{ p.full_name }}', '{{ p.stage }}')"
+                                        title="Change Stage"
+                                        class="px-2.5 py-1.5 text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-300/70 rounded-lg flex items-center gap-1 transition">
+                                    <i data-lucide="git-commit" class="w-3.5 h-3.5 text-blue-600"></i> Update Stage
+                                </button>
+                                <button hx-get="/prospects/{{ p.id }}/history" hx-target="#modal-container"
+                                        title="View Stage History"
+                                        class="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition">
+                                    <i data-lucide="history" class="w-4 h-4"></i>
+                                </button>
                             </div>
-                            <h4 class="text-[18px] font-semibold text-gray-900">No guests yet</h4>
-                            <p class="text-[14px] text-gray-500 max-w-sm">
-                                Invite visitors to your next meeting and record their details to start converting them into members.
-                            </p>
-                            <button class="btn-primary mt-2" onclick="document.getElementById('add-prospect-modal').classList.remove('hidden')">
-                                <i data-lucide="user-plus" class="w-4 h-4"></i> ＋ Add Guest
-                            </button>
-                        </div>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="6" class="py-16 text-center">
+                            <div class="flex flex-col items-center justify-center space-y-3">
+                                <div class="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center text-3xl shadow-inner">
+                                    📭
+                                </div>
+                                <h4 class="text-[18px] font-semibold text-slate-900">No guests in this stage</h4>
+                                <p class="text-[14px] text-slate-500 max-w-sm">
+                                    Log visitors attending club meetings to move them through the conversion pipeline.
+                                </p>
+                                <button class="btn-primary mt-2" onclick="document.getElementById('add-prospect-modal').classList.remove('hidden')">
+                                    <i data-lucide="user-plus" class="w-4 h-4"></i> ＋ Add New Guest
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
     </div>
 </div>
 
-<!-- Add Prospect Modal -->
-<div id="add-prospect-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-    <div class="bg-white p-6 rounded-[12px] w-96 shadow-xl">
-        <h3 class="text-lg font-bold text-[#004165] mb-4">Log New Guest</h3>
+<!-- ================= ADD PROSPECT MODAL ================= -->
+<div id="add-prospect-modal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+    <div class="bg-white p-6 rounded-[16px] w-full max-w-md shadow-2xl border border-slate-100 transform transition-all">
+        <div class="flex justify-between items-center mb-5 pb-3 border-b border-slate-100">
+            <div class="flex items-center gap-2">
+                <div class="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center">
+                    <i data-lucide="user-plus" class="w-4 h-4"></i>
+                </div>
+                <h3 class="text-lg font-bold text-slate-900">Log New Meeting Guest</h3>
+            </div>
+            <button type="button" onclick="document.getElementById('add-prospect-modal').classList.add('hidden')" class="text-slate-400 hover:text-slate-600">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+        </div>
+
         <form hx-post="/prospects" hx-target="#main-content" onsubmit="document.getElementById('add-prospect-modal').classList.add('hidden')">
-            <div class="mb-3">
-                <label class="block text-sm text-slate-500 mb-1">Full Name</label>
-                <input type="text" name="full_name" required class="w-full border border-slate-300 rounded-[8px] px-3 py-2 focus:outline-none focus:ring-1 focus:ring-[#004165]">
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Full Name *</label>
+                    <input type="text" name="full_name" required placeholder="e.g. Sarah Perera"
+                           class="w-full border border-slate-300 rounded-lg px-3.5 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Email Address *</label>
+                    <input type="email" name="email" required placeholder="e.g. sarah.p@gmail.com"
+                           class="w-full border border-slate-300 rounded-lg px-3.5 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Phone / WhatsApp</label>
+                    <input type="text" name="phone" placeholder="e.g. +94 77 123 4567"
+                           class="w-full border border-slate-300 rounded-lg px-3.5 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Initial Stage</label>
+                    <select name="initial_stage" class="w-full border border-slate-300 rounded-lg px-3.5 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        {% for s in stages %}
+                        <option value="{{ s }}" {% if s == '1st Visit' %}selected{% endif %}>{{ s }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Notes / Impressions</label>
+                    <textarea name="notes" rows="2" placeholder="e.g. Invited by John; interested in public speaking"
+                              class="w-full border border-slate-300 rounded-lg px-3.5 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"></textarea>
+                </div>
             </div>
-            <div class="mb-3">
-                <label class="block text-sm text-slate-500 mb-1">Email</label>
-                <input type="email" name="email" required class="w-full border border-slate-300 rounded-[8px] px-3 py-2 focus:outline-none focus:ring-1 focus:ring-[#004165]">
-            </div>
-            <div class="mb-4">
-                <label class="block text-sm text-slate-500 mb-1">Phone</label>
-                <input type="text" name="phone" class="w-full border border-slate-300 rounded-[8px] px-3 py-2 focus:outline-none focus:ring-1 focus:ring-[#004165]">
-            </div>
-            <div class="flex justify-end space-x-2">
-                <button type="button" onclick="document.getElementById('add-prospect-modal').classList.add('hidden')" class="px-4 py-2 text-sm text-slate-500 hover:bg-slate-100 rounded-[8px] transition-colors">Cancel</button>
-                <button type="submit" class="bg-[#772432] hover:bg-[#5c1c27] text-white font-medium shadow-sm transition-colors px-4 py-2 rounded-[8px]">Save Guest</button>
+
+            <div class="flex justify-end gap-2 mt-6 pt-4 border-t border-slate-100">
+                <button type="button" onclick="document.getElementById('add-prospect-modal').classList.add('hidden')"
+                        class="px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 rounded-lg transition">Cancel</button>
+                <button type="submit" class="btn-primary">
+                    <i data-lucide="check" class="w-4 h-4"></i> Save Guest
+                </button>
             </div>
         </form>
     </div>
 </div>
+
+<!-- ================= DYNAMIC STAGE UPDATE MODAL ================= -->
+<div id="update-stage-modal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+    <div class="bg-white p-6 rounded-[16px] w-full max-w-md shadow-2xl border border-slate-100 transform transition-all">
+        <div class="flex justify-between items-center mb-5 pb-3 border-b border-slate-100">
+            <div class="flex items-center gap-2">
+                <div class="w-8 h-8 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center">
+                    <i data-lucide="git-commit" class="w-4 h-4"></i>
+                </div>
+                <div>
+                    <h3 class="text-lg font-bold text-slate-900">Update Pipeline Stage</h3>
+                    <p class="text-xs text-slate-500" id="update-modal-guest-name">Guest Name</p>
+                </div>
+            </div>
+            <button type="button" onclick="document.getElementById('update-stage-modal').classList.add('hidden')" class="text-slate-400 hover:text-slate-600">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+        </div>
+
+        <form id="update-stage-form" method="POST" hx-post="/prospects/0/stage" hx-target="#main-content" onsubmit="document.getElementById('update-stage-modal').classList.add('hidden')">
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">New Stage *</label>
+                    <select id="update-stage-select" name="stage" required class="w-full border border-slate-300 rounded-lg px-3.5 py-2.5 text-sm bg-white font-medium focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        {% for s in stages %}
+                        <option value="{{ s }}">{{ s }}{% if s == 'Onboarded' %} 🎉 (Converts to Active Member){% endif %}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">Progress Notes / Follow-up Details</label>
+                    <textarea name="notes" rows="3" placeholder="e.g. Attended 2nd meeting, paid membership dues to Treasurer"
+                              class="w-full border border-slate-300 rounded-lg px-3.5 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"></textarea>
+                </div>
+            </div>
+
+            <div class="flex justify-end gap-2 mt-6 pt-4 border-t border-slate-100">
+                <button type="button" onclick="document.getElementById('update-stage-modal').classList.add('hidden')"
+                        class="px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 rounded-lg transition">Cancel</button>
+                <button type="submit" class="btn-primary">
+                    <i data-lucide="arrow-up-right" class="w-4 h-4"></i> Update Stage
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function openUpdateModal(prospectId, guestName, currentStage) {
+    const modal = document.getElementById('update-stage-modal');
+    const form = document.getElementById('update-stage-form');
+    const nameSpan = document.getElementById('update-modal-guest-name');
+    const stageSelect = document.getElementById('update-stage-select');
+
+    nameSpan.textContent = guestName;
+    form.setAttribute('hx-post', '/prospects/' + prospectId + '/stage');
+    htmx.process(form);
+
+    stageSelect.value = currentStage;
+    modal.classList.remove('hidden');
+}
+
+function filterProspectTable() {
+    const input = document.getElementById('prospect-search');
+    const filter = input.value.toLowerCase();
+    const rows = document.querySelectorAll('.prospect-row');
+
+    rows.forEach(row => {
+        const name = row.querySelector('.prospect-name').textContent.toLowerCase();
+        if (name.includes(filter)) {
+            row.style.display = '';
+        } else {
+            row.style.display = 'none';
+        }
+    });
+}
+</script>
