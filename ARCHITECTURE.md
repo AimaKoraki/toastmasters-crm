@@ -172,12 +172,14 @@ Browser                     FastAPI (main.py)               Supabase
 | `GET` | `/reports/export` | ✅ Complete | Render standalone export report modal partial |
 | `GET` | `/reports/download` | ✅ Complete | Stream CSV export of attendance, guests, roles, or summary |
 
-#### `members.py` *(Upcoming)*
+#### `members.py`
 | Method | Path | Status | Description |
 |---|---|---|---|
-| `GET` | `/members` | ⏳ Pending | Render member directory partial with status filter |
-| `POST` | `/members` | ⏳ Pending | Add / edit member record |
-| `GET` | `/members/{id}` | ⏳ Pending | Member detail & Pathways profile view |
+| `GET` | `/members` | ✅ Complete | Render member directory partial with status filters & metrics |
+| `GET` | `/members/new` | ✅ Complete | Render standalone Add Member modal partial |
+| `POST` | `/members` | ✅ Complete | Insert new active member with unique email validation |
+| `GET` | `/members/{id}/edit` | ✅ Complete | Render standalone Edit Member modal partial |
+| `POST` | `/members/{id}` | ✅ Complete | Update member status, contact, and Pathways progression |
 
 ---
 

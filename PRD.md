@@ -13,7 +13,7 @@ A lightweight, high-speed internal management system built for the Vice Presiden
 | **Core** | Access & Auth | ✅ Complete | Passkey verification, session cookie, route guards, login page | Hardened secret loading from env |
 | **Module A** | Executive Dashboard | ✅ Complete | Metric cards, upcoming meeting hero, activity feed, pipeline preview, all 5 quick actions wired | — |
 | **Module B** | Guest & Prospect Pipeline | ✅ Complete | Guest table view, guest creation endpoint, stage progression (`POST /stage`), auto-onboarding, stage history modal, stage filter tabs | — |
-| **Module C** | Member Management | ⏳ 0% Complete | Data schema defined in `members` table | Router `members.py`, member directory UI, renewal tracker |
+| **Module C** | Member Management | ✅ Complete | Roster directory UI (`partials/members.html`), CRUD endpoints in `members.py`, status filtering, renewal cycle tracking, modals | — |
 | **Module D** | Meeting & Attendance | ✅ Complete | Meeting creation, meeting list with stats, batch attendance logger (`POST /attendance`), interactive check-in UI | — |
 | **Module E** | Roles & History Matrix | ✅ Complete | Role catalog, dynamic cross-tabulation frequency matrix, multi-role assignment (`POST /roles/assign`), member role history modal | — |
 | **Module F** | Reports & Exports | ✅ Complete | Reports overview dashboard (`partials/reports.html`), export modal, CSV download generator (`GET /reports/download`) | — |
@@ -101,12 +101,14 @@ Fixed left sidebar (`w-64`) with Lucide icons, categorized into clear operationa
   - [x] Stage filter tabs (`All`, `1st Visit`, `2nd Visit`, `Form Sent`, `Payment Pending`, `Onboarded`).
 
 #### Module C: Member Management
-- **Member Profiles:** Full Name, Contact Details, Join Date, Status (`Active`/`Inactive`/`Alumni`), Pathways Level. *(Schema defined in `members` table)*
-- **Semi-annual Renewal Tracking:** March & September renewal cycle indicators. *(⏳ Pending)*
-- **Remaining Deliverables:**
-  - [ ] Create `app/routers/members.py` with CRUD endpoints.
-  - [ ] Create `app/templates/partials/members.html` with status filter tabs (`All`, `Active`, `Inactive`, `Alumni`).
-  - [ ] Add member edit / Pathways level update modal.
+- **Member Profiles:** Full Name, Contact Details, Join Date, Status (`Active`/`Inactive`/`Alumni`), Pathways Level. *(✅ Implemented)*
+- **Semi-annual Renewal Tracking:** March & September renewal cycle urgency indicators. *(✅ Implemented)*
+- **Delivered Features:**
+  - [x] Implemented `app/routers/members.py` with `GET /members`, `GET /members/new`, `POST /members`, `GET /members/{id}/edit`, `POST /members/{id}`.
+  - [x] Built `app/templates/partials/members.html` with status filter tabs (`All`, `Active`, `Inactive`, `Alumni`) and KPI summary strip.
+  - [x] Built standalone Add Member and Edit Member modals (`partials/member_modal.html`, `partials/member_edit_modal.html`).
+  - [x] Added dynamic semi-annual dues renewal calculation (March 31 / September 30 Toastmasters cycles).
+  - [x] Automated test suite `test_members.py` verified.
 
 #### Module D: Meeting & Attendance Tracking
 - **Meeting Records:** Create upcoming or past meetings (Meeting #, Date, Theme, Host). *(✅ Implemented)*

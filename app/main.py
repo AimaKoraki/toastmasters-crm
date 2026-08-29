@@ -3,7 +3,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 import os
 from starlette.middleware.sessions import SessionMiddleware
-from app.routers import auth, prospects, meetings, roles, reports
+from app.routers import auth, prospects, meetings, roles, reports, members
 from app.dependencies import get_current_user
 from fastapi import Depends
 
@@ -23,6 +23,7 @@ app.include_router(prospects.router)
 app.include_router(meetings.router)
 app.include_router(roles.router)
 app.include_router(reports.router)
+app.include_router(members.router, prefix="/members", tags=["members"])
 
 @app.get("/")
 def read_root(request: Request, user=Depends(get_current_user)):

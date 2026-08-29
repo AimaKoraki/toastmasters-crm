@@ -1,0 +1,241 @@
+<div class="space-y-6">
+    <!-- Success Banner & Toast Trigger -->
+    {% if success_message %}
+    <div class="toast-trigger hidden" data-toast-message="{{ success_message }}" data-toast-type="success"></div>
+    <div class="flex items-center justify-between gap-3 bg-emerald-50 border border-emerald-200 text-emerald-800 px-4 py-3 rounded-[12px] shadow-sm">
+        <div class="flex items-center gap-2">
+            <i data-lucide="check-circle-2" class="w-5 h-5 text-emerald-600 shrink-0"></i>
+            <span class="text-sm font-medium">{{ success_message }}</span>
+        </div>
+        <button onclick="this.parentElement.remove()" class="text-emerald-500 hover:text-emerald-700">
+            <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+    </div>
+    {% endif %}
+
+    <!-- Header Card with Title, Stats & CTA -->
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-6 rounded-[14px] border border-[#E5E9E8] shadow-sm">
+        <div>
+            <div class="flex items-center gap-3">
+                <h2 class="text-[24px] font-bold text-gray-900 tracking-tight">Member Directory</h2>
+                <span class="px-2.5 py-0.5 text-xs font-semibold rounded-full bg-blue-50 text-blue-700 border border-blue-200">
+                    {{ stats.total }} members
+                </span>
+            </div>
+            <p class="text-sm text-slate-500 mt-1">
+                Maintain club roster, track Pathways educational progress, and monitor semi-annual renewal cycles.
+            </p>
+        </div>
+        <button hx-get="/members/new" hx-target="#modal-container"
+                class="btn-primary shrink-0 shadow-sm hover:shadow">
+            <i data-lucide="user-plus" class="w-4 h-4"></i> ＋ Add Member
+        </button>
+    </div>
+
+    <!-- Quick Metrics Strip -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-xs flex items-center gap-3">
+            <div class="w-10 h-10 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center font-bold">
+                <i data-lucide="users" class="w-5 h-5"></i>
+            </div>
+            <div>
+                <div class="text-xs text-slate-500 font-medium">Total Roster</div>
+                <div class="text-lg font-bold text-slate-900">{{ stats.total }}</div>
+            </div>
+        </div>
+        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-xs flex items-center gap-3">
+            <div class="w-10 h-10 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold">
+                <i data-lucide="user-check" class="w-5 h-5"></i>
+            </div>
+            <div>
+                <div class="text-xs text-slate-500 font-medium">Active Members</div>
+                <div class="text-lg font-bold text-emerald-700">{{ stats.active }}</div>
+            </div>
+        </div>
+        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-xs flex items-center gap-3">
+            <div class="w-10 h-10 rounded-lg bg-slate-100 text-slate-600 flex items-center justify-center font-bold">
+                <i data-lucide="user-x" class="w-5 h-5"></i>
+            </div>
+            <div>
+                <div class="text-xs text-slate-500 font-medium">Inactive</div>
+                <div class="text-lg font-bold text-slate-700">{{ stats.inactive }}</div>
+            </div>
+        </div>
+        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-xs flex items-center gap-3">
+            <div class="w-10 h-10 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold">
+                <i data-lucide="graduation-cap" class="w-5 h-5"></i>
+            </div>
+            <div>
+                <div class="text-xs text-slate-500 font-medium">Alumni</div>
+                <div class="text-lg font-bold text-indigo-700">{{ stats.alumni }}</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filter Tabs & Quick Search -->
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 bg-white p-3 rounded-[12px] border border-[#E5E9E8]">
+        <!-- Status Filters -->
+        <div class="flex items-center gap-1 overflow-x-auto pb-1 md:pb-0 text-sm">
+            <button hx-get="/members?status=all" hx-target="#main-content"
+                    class="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all {% if active_status == 'all' or not active_status %}bg-[#2563eb] text-white shadow-sm{% else %}text-slate-600 hover:bg-slate-100{% endif %}">
+                All Members ({{ stats.total }})
+            </button>
+            <button hx-get="/members?status=Active" hx-target="#main-content"
+                    class="px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all {% if active_status == 'Active' %}bg-[#2563eb] text-white shadow-sm{% else %}text-slate-600 hover:bg-slate-100{% endif %}">
+                Active ({{ stats.active }})
+            </button>
+            <button hx-get="/members?status=Inactive" hx-target="#main-content"
+                    class="px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all {% if active_status == 'Inactive' %}bg-[#2563eb] text-white shadow-sm{% else %}text-slate-600 hover:bg-slate-100{% endif %}">
+                Inactive ({{ stats.inactive }})
+            </button>
+            <button hx-get="/members?status=Alumni" hx-target="#main-content"
+                    class="px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all {% if active_status == 'Alumni' %}bg-[#2563eb] text-white shadow-sm{% else %}text-slate-600 hover:bg-slate-100{% endif %}">
+                Alumni ({{ stats.alumni }})
+            </button>
+        </div>
+
+        <!-- Search Bar -->
+        <div class="relative w-full md:w-64">
+            <i data-lucide="search" class="w-4 h-4 absolute left-3 top-2.5 text-slate-400"></i>
+            <input type="text" id="member-search" onkeyup="filterMemberTable()" placeholder="Search members..."
+                   class="w-full pl-9 pr-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:bg-white transition">
+        </div>
+    </div>
+
+    <!-- Member Directory Table Card -->
+    <div class="card overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full text-left text-sm text-gray-600" id="members-table">
+                <thead class="bg-slate-50 text-[13px] font-semibold uppercase tracking-[0.08em] text-slate-500 border-b border-slate-200">
+                    <tr>
+                        <th class="px-6 py-3.5">Member Details</th>
+                        <th class="px-6 py-3.5">Phone / Contact</th>
+                        <th class="px-6 py-3.5">Status</th>
+                        <th class="px-6 py-3.5">Pathways Progress</th>
+                        <th class="px-6 py-3.5">Dues Renewal</th>
+                        <th class="px-6 py-3.5 text-right">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100">
+                    {% for m in members %}
+                    <tr class="hover:bg-slate-50/70 transition-colors member-row">
+                        <!-- Member Name & Avatar -->
+                        <td class="px-6 py-4">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-9 h-9 rounded-full bg-slate-100 text-slate-700 font-bold text-xs flex items-center justify-center shrink-0 border border-slate-200 shadow-sm">
+                                    {{ m.full_name[:2].upper() }}
+                                </div>
+                                <div>
+                                    <div class="text-slate-900 font-semibold text-sm member-name">{{ m.full_name }}</div>
+                                    <div class="text-slate-500 text-xs flex items-center gap-1 mt-0.5">
+                                        <i data-lucide="mail" class="w-3 h-3 text-slate-400"></i>
+                                        <span>{{ m.email }}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </td>
+
+                        <!-- Phone / Contact -->
+                        <td class="px-6 py-4 text-slate-600 text-xs font-mono">
+                            {{ m.phone or '—' }}
+                        </td>
+
+                        <!-- Status Badge -->
+                        <td class="px-6 py-4">
+                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs rounded-full border font-semibold
+                                {% if m.status == 'Active' %}bg-emerald-50 text-emerald-700 border-emerald-200
+                                {% elif m.status == 'Inactive' %}bg-slate-100 text-slate-600 border-slate-200
+                                {% elif m.status == 'Alumni' %}bg-indigo-50 text-indigo-700 border-indigo-200
+                                {% else %}bg-gray-50 text-gray-700 border-gray-200{% endif %}">
+                                <span class="w-1.5 h-1.5 rounded-full 
+                                    {% if m.status == 'Active' %}bg-emerald-500
+                                    {% elif m.status == 'Inactive' %}bg-slate-400
+                                    {% elif m.status == 'Alumni' %}bg-indigo-500
+                                    {% else %}bg-gray-400{% endif %}">
+                                </span>
+                                {{ m.status }}
+                            </span>
+                        </td>
+
+                        <!-- Pathways Level Badge -->
+                        <td class="px-6 py-4">
+                            <span class="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold rounded-md border
+                                {% if m.pathway_level == 'DTM' %}bg-amber-100 text-amber-900 border-amber-300 font-bold
+                                {% elif m.pathway_level == 'Level 5' %}bg-purple-50 text-purple-700 border-purple-200
+                                {% elif m.pathway_level == 'Level 4' %}bg-blue-50 text-blue-700 border-blue-200
+                                {% elif m.pathway_level == 'Level 3' %}bg-sky-50 text-sky-700 border-sky-200
+                                {% else %}bg-slate-100 text-slate-700 border-slate-200{% endif %}">
+                                <i data-lucide="award" class="w-3.5 h-3.5 {% if m.pathway_level == 'DTM' %}text-amber-600{% else %}text-slate-400{% endif %}"></i>
+                                {{ m.pathway_level or 'Level 1' }}
+                            </span>
+                        </td>
+
+                        <!-- Dues Renewal Status Indicator -->
+                        <td class="px-6 py-4">
+                            {% if m.renewal_info %}
+                            <div class="flex flex-col items-start gap-1">
+                                <span class="inline-flex items-center gap-1.5 px-2 py-0.5 text-[11px] rounded-full border font-medium {{ m.renewal_info.badge_class }}">
+                                    <span class="w-1.5 h-1.5 rounded-full {{ m.renewal_info.dot_class }}"></span>
+                                    {{ m.renewal_info.status }} ({{ m.renewal_info.cycle }})
+                                </span>
+                                <span class="text-[10px] text-slate-400">{{ m.renewal_info.days_left }} days remaining</span>
+                            </div>
+                            {% else %}
+                            <span class="text-xs text-slate-400">—</span>
+                            {% endif %}
+                        </td>
+
+                        <!-- Actions -->
+                        <td class="px-6 py-4 text-right whitespace-nowrap">
+                            <div class="flex items-center justify-end gap-1">
+                                <button hx-get="/members/{{ m.id }}/edit" hx-target="#modal-container"
+                                        class="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition" title="Edit Member Profile">
+                                    <i data-lucide="pencil" class="w-4 h-4"></i>
+                                </button>
+                                <button hx-get="/roles/member/{{ m.id }}/history" hx-target="#modal-container"
+                                        class="p-1.5 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition" title="View Role History">
+                                    <i data-lucide="history" class="w-4 h-4"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="6" class="py-16 text-center">
+                            <div class="flex flex-col items-center justify-center space-y-3">
+                                <div class="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center text-3xl shadow-inner">
+                                    👥
+                                </div>
+                                <h4 class="text-[18px] font-semibold text-slate-900">No members found</h4>
+                                <p class="text-[14px] text-slate-500 max-w-sm">
+                                    No member records match the selected status filter. Add members or adjust the filter criteria.
+                                </p>
+                                <button class="btn-primary mt-2" hx-get="/members/new" hx-target="#modal-container">
+                                    <i data-lucide="user-plus" class="w-4 h-4"></i> ＋ Add Member
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+function filterMemberTable() {
+    const input = document.getElementById('member-search');
+    const filter = input.value.toLowerCase();
+    const rows = document.querySelectorAll('.member-row');
+
+    rows.forEach(row => {
+        const name = row.querySelector('.member-name')?.textContent.toLowerCase() || '';
+        if (name.includes(filter)) {
+            row.style.display = '';
+        } else {
+            row.style.display = 'none';
+        }
+    });
+}
+</script>

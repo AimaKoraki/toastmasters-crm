@@ -98,10 +98,12 @@
                     </a>
                     <a href="#"
                        data-nav="members"
+                       hx-get="/members"
+                       hx-target="#main-content"
+                       onclick="setActiveNav(this); closeMobileNav();"
                        class="nav-link flex items-center px-3 py-2 text-sm rounded-lg transition-all text-slate-300 hover:text-white hover:bg-[#1e293b]/50 {% if active_page == 'members' %}bg-[#2563eb] text-white font-semibold{% endif %}">
                         <i data-lucide="users" class="w-5 h-5 mr-3 inline-block"></i>
                         Members
-                        <span class="ml-auto text-[10px] font-semibold text-slate-500 bg-slate-800 px-1.5 py-0.5 rounded">Soon</span>
                     </a>
                     <a href="#"
                        data-nav="follow_ups"
@@ -339,6 +341,7 @@
         // Map of endpoint patterns → { title, subtitle, nav key }
         const PAGE_MAP = [
             { pattern: /^\/prospects/,       title: 'Guest & Prospect Pipeline', subtitle: 'Track and convert visitors to members', nav: 'guests' },
+            { pattern: /^\/members/,         title: 'Member Directory',           subtitle: 'Club roster, renewals, and Pathways progress', nav: 'members' },
             { pattern: /^\/meetings\/live/,  title: 'Live Meeting Console',       subtitle: 'Meeting day operations hub',            nav: 'agenda' },
             { pattern: /^\/meetings\/\d+\/attendance/, title: 'Attendance Check-in', subtitle: 'Batch mark member attendance', nav: 'attendance' },
             { pattern: /^\/meetings\/attendance/, title: 'Attendance Check-in',   subtitle: 'Batch mark member attendance',         nav: 'attendance' },
