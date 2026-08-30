@@ -47,15 +47,16 @@ CREATE TABLE role_catalog (
 
 -- Insert Default Club Roles
 INSERT INTO role_catalog (role_name, category) VALUES
-('Meeting Host', 'Major'),
-('Topics Master', 'Major'),
-('General Evaluator', 'Major'),
+('Toastmaster of the Day (TMOD)', 'Major'),
+('Table Topics Master (TTM)', 'Major'),
+('General Evaluator (GE)', 'Major'),
 ('Speech Evaluator', 'Major'),
 ('Speaker', 'Major'),
 ('Timer', 'Functional'),
-('Filler Word Counter', 'Functional'),
-('Language Evaluator', 'Functional'),
-('Topics Evaluator', 'Functional');
+('Ah-Counter', 'Functional'),
+('Grammarian', 'Functional'),
+('Table Topics Evaluator', 'Functional'),
+('Round Robin Master (RRM)', 'Functional');
 
 -- 5. Role Assignments Table (Allows multiple entries per member per meeting)
 CREATE TABLE role_assignments (

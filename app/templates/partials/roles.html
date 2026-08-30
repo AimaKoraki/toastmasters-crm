@@ -254,7 +254,9 @@
                         {% for r in func_role_list %}
                         <th class="px-3 py-3 text-center w-24">
                             <span class="block truncate max-w-[90px] mx-auto" title="{{ r.role_name }}">
-                                {{ r.role_name | replace("Table Topics Evaluator", "TT Eval.")
+                                {{ r.role_name | replace("Round Robin Master (RRM)", "RRM")
+                                              | replace("Round Robin Master", "RRM")
+                                              | replace("Table Topics Evaluator", "TT Eval.")
                                               | replace("Ah-Counter", "Ah-Ctr")
                                               | replace("Grammarian", "Gram.") }}
                             </span>
