@@ -62,6 +62,22 @@ def test_add_prospect_and_stage_progression():
     hist_res = client.get("/prospects/1/history")
     assert hist_res.status_code == 200
 
+def test_edit_prospect():
+    login()
+    # Test edit modal load
+    edit_modal_res = client.get("/prospects/1/edit")
+    assert edit_modal_res.status_code == 200
+    assert "Edit Guest Details" in edit_modal_res.text
+
+    # Test update prospect details
+    update_res = client.post("/prospects/1", data={
+        "full_name": "Updated Prospect Name",
+        "email": "updated_prospect@example.com",
+        "phone": "+94 77 111 2222"
+    })
+    assert update_res.status_code == 200
+    assert "successfully updated" in update_res.text or "Updated Prospect Name" in update_res.text
+
 if __name__ == "__main__":
     print("Running tests manually...")
     test_unauthenticated_prospects()
@@ -72,4 +88,7 @@ if __name__ == "__main__":
     print("[PASS] test_get_new_prospect_modal passed")
     test_add_prospect_and_stage_progression()
     print("[PASS] test_add_prospect_and_stage_progression passed")
+    test_edit_prospect()
+    print("[PASS] test_edit_prospect passed")
     print("All tests successfully passed!")
+

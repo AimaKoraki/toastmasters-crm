@@ -169,13 +169,18 @@
                             {{ p.last_contacted[:10] if p.last_contacted else '—' }}
                         </td>
 
-                        <!-- Actions (Update Stage Modal + History) -->
+                        <!-- Actions (Update Stage Modal + Edit + History) -->
                         <td class="px-6 py-4 text-right">
-                            <div class="flex items-center justify-end gap-2">
+                            <div class="flex items-center justify-end gap-1.5">
                                 <button onclick="openUpdateModal('{{ p.id }}', '{{ p.full_name }}', '{{ p.stage }}')"
                                         title="Change Stage"
                                         class="px-2.5 py-1.5 text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-300/70 rounded-lg flex items-center gap-1 transition">
                                     <i data-lucide="git-commit" class="w-3.5 h-3.5 text-blue-600"></i> Update Stage
+                                </button>
+                                <button hx-get="/prospects/{{ p.id }}/edit" hx-target="#modal-container"
+                                        title="Edit Guest Details"
+                                        class="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition">
+                                    <i data-lucide="pencil" class="w-4 h-4"></i>
                                 </button>
                                 <button hx-get="/prospects/{{ p.id }}/history" hx-target="#modal-container"
                                         title="View Stage History"

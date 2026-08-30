@@ -242,3 +242,82 @@ async def get_prospect_history(
         "stages": STAGES
     }
     return templates.TemplateResponse(request, "partials/prospect_history_modal.html", context)
+
+
+@router.get("/{prospect_id}/edit", response_class=HTMLResponse)
+async def get_edit_prospect_modal(
+    request: Request,
+    prospect_id: int,
+    user=Depends(get_current_user)
+):
+    """
+    Renders the standalone Edit Guest modal partial pre-populated with guest details.
+    """
+    prospect = None
+    if supabase:
+        try:
+            res = supabase.table("members").select("*").eq("id", prospect_id).execute()
+            if res.data:
+                prospect = res.data[0]
+        except Exception as e:
+            print(f"Error fetching prospect for edit: {e}")
+
+    if not prospect:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Guest with ID #{prospect_id} not found."
+        )
+
+    context = {
+        "request": request,
+        "prospect": prospect,
+        "stages": STAGES
+    }
+    return templates.TemplateResponse(request, "partials/prospect_edit_modal.html", context)
+
+
+@router.post("/{prospect_id}", response_class=HTMLResponse)
+async def update_prospect(
+    request: Request,
+    prospect_id: int,
+    full_name: str = Form(...),
+    email: str = Form(...),
+    phone: str = Form(""),
+    user=Depends(get_current_user)
+):
+    """
+    Updates an existing guest's contact details (name, email, phone).
+    """
+    if supabase:
+        try:
+            update_payload = {
+                "full_name": full_name.strip(),
+                "email": email.strip().lower(),
+                "phone": phone.strip() if phone else None
+            }
+            res = supabase.table("members").update(update_payload).eq("id", prospect_id).execute()
+            if not res.data:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail=f"Guest #{prospect_id} not found to update."
+                )
+        except HTTPException:
+            raise
+        except Exception as e:
+            print(f"Error updating guest #{prospect_id}: {e}")
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Failed to update guest details: {str(e)}"
+            )
+
+    prospects = fetch_prospects_data(stage_filter="all")
+    context = {
+        "request": request,
+        "prospects": prospects,
+        "stages": STAGES,
+        "active_stage": "all",
+        "active_page": "guests",
+        "success_message": f"Guest '{full_name.strip()}' contact details successfully updated."
+    }
+    return templates.TemplateResponse(request, "partials/prospects.html", context)
+

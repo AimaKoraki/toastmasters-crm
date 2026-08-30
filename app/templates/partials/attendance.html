@@ -20,7 +20,7 @@
                         </span>
                         <span class="flex items-center gap-1">
                             <i data-lucide="users" class="w-3.5 h-3.5 text-slate-400"></i>
-                            {{ members|length }} people in roster
+                            {{ club_members|length }} Members &bull; {{ guests_roster|length }} Guests
                         </span>
                     </div>
                 </div>
@@ -56,7 +56,7 @@
         <!-- Live Roster Search with Clear Button -->
         <div class="relative w-full md:w-64">
             <i data-lucide="search" class="w-4 h-4 absolute left-3 top-2.5 text-slate-400"></i>
-            <input type="text" id="roster-search" oninput="handleRosterSearch(this)" placeholder="Search member name..."
+            <input type="text" id="roster-search" oninput="handleRosterSearch(this)" placeholder="Search member or guest name..."
                    class="w-full pl-9 pr-8 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:bg-white transition">
             <button type="button" id="roster-search-clear" onclick="clearRosterSearch()" class="hidden absolute right-2.5 top-2 text-slate-400 hover:text-slate-600 p-0.5" title="Clear filter">
                 <i data-lucide="x" class="w-3.5 h-3.5"></i>
@@ -64,95 +64,181 @@
         </div>
     </div>
 
-    <!-- Attendance Form & Member Table -->
-    <form id="batch-attendance-form" hx-post="/attendance" hx-target="#main-content" class="card overflow-hidden">
+    <!-- Attendance Form -->
+    <form id="batch-attendance-form" hx-post="/attendance" hx-target="#main-content" class="space-y-6">
         <input type="hidden" name="meeting_id" value="{{ meeting.id if meeting else meeting_id }}">
 
-        <div class="overflow-x-auto">
-            <table class="w-full text-left text-sm text-gray-600" id="roster-table">
-                <thead class="bg-slate-50 text-[13px] font-semibold uppercase tracking-[0.08em] text-slate-500 border-b border-slate-200 select-none">
-                    <tr>
-                        <th class="px-6 py-3.5 cursor-pointer hover:bg-slate-100/80 transition group" onclick="sortTable('roster-table', 0, 'string')">
-                            <span class="inline-flex items-center gap-1">Member / Guest <span class="sort-icon text-slate-300 group-hover:text-slate-500 text-xs">↕</span></span>
-                        </th>
-                        <th class="px-6 py-3.5 cursor-pointer hover:bg-slate-100/80 transition group" onclick="sortTable('roster-table', 1, 'string')">
-                            <span class="inline-flex items-center gap-1">Member Type <span class="sort-icon text-slate-300 group-hover:text-slate-500 text-xs">↕</span></span>
-                        </th>
-                        <th class="px-6 py-3.5 text-center">Attendance Status</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-gray-100">
-                    {% for m in members %}
-                    <tr class="hover:bg-slate-50/70 transition-colors roster-row">
-                        <!-- Member Info -->
-                        <td class="px-6 py-3.5" data-sort-val="{{ m.full_name }}">
-                            <div class="flex items-center space-x-3">
-                                <div class="w-9 h-9 rounded-full bg-slate-100 text-slate-700 font-bold text-xs flex items-center justify-center shrink-0 border border-slate-200 shadow-sm">
-                                    {{ m.full_name[:2].upper() }}
-                                </div>
-                                <div>
-                                    <div class="text-slate-900 font-semibold text-sm roster-name">{{ m.full_name }}</div>
-                                    <div class="text-slate-500 text-xs">{{ m.email }}</div>
-                                </div>
-                            </div>
-                        </td>
+        <!-- SECTION 1: CLUB MEMBERS ROSTER -->
+        <div class="card overflow-hidden">
+            <div class="bg-slate-900 text-white px-6 py-4 flex items-center justify-between">
+                <div class="flex items-center gap-2.5">
+                    <i data-lucide="users" class="w-5 h-5 text-blue-400"></i>
+                    <h3 class="font-bold text-base tracking-tight">Club Members Roster</h3>
+                </div>
+                <span class="px-2.5 py-0.5 text-xs font-semibold rounded-full bg-slate-800 text-slate-300 border border-slate-700">
+                    {{ club_members|length }} Members
+                </span>
+            </div>
 
-                        <!-- Member Type Badge -->
-                        <td class="px-6 py-3.5" data-sort-val="{{ m.member_type }}">
-                            <span class="px-2.5 py-0.5 text-xs font-semibold rounded-full border
-                                {% if m.member_type == 'Active' %}bg-emerald-50 text-emerald-700 border-emerald-200
-                                {% elif m.member_type == 'Prospect' %}bg-sky-50 text-sky-700 border-sky-200
-                                {% else %}bg-slate-50 text-slate-700 border-slate-200{% endif %}">
-                                {{ m.member_type }}
-                            </span>
-                        </td>
-
-                        <!-- Segmented Status Radios -->
-                        <td class="px-6 py-3.5">
-                            <div class="flex items-center justify-center gap-1 bg-slate-100 p-1 rounded-xl border border-slate-200 max-w-sm mx-auto">
-                                {% for st in statuses %}
-                                <label class="flex-1 cursor-pointer">
-                                    <input type="radio" name="status_{{ m.id }}" value="{{ st }}"
-                                           class="peer sr-only status-radio"
-                                           data-status="{{ st }}"
-                                           {% if m.status == st %}checked{% endif %}>
-                                    <div class="text-center py-1.5 px-2.5 text-xs font-semibold rounded-lg transition-all text-slate-600
-                                                peer-checked:shadow-sm
-                                                {% if st == 'Present' %}peer-checked:bg-emerald-500 peer-checked:text-white
-                                                {% elif st == 'Absent' %}peer-checked:bg-red-500 peer-checked:text-white
-                                                {% elif st == 'Excused' %}peer-checked:bg-amber-500 peer-checked:text-white
-                                                {% elif st == 'Guest' %}peer-checked:bg-sky-500 peer-checked:text-white
-                                                {% endif %}">
-                                        {{ st }}
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-sm text-gray-600" id="members-roster-table">
+                    <thead class="bg-slate-50 text-[13px] font-semibold uppercase tracking-[0.08em] text-slate-500 border-b border-slate-200 select-none">
+                        <tr>
+                            <th class="px-6 py-3.5 cursor-pointer hover:bg-slate-100/80 transition group" onclick="sortTable('members-roster-table', 0, 'string')">
+                                <span class="inline-flex items-center gap-1">Member Name <span class="sort-icon text-slate-300 group-hover:text-slate-500 text-xs">↕</span></span>
+                            </th>
+                            <th class="px-6 py-3.5 cursor-pointer hover:bg-slate-100/80 transition group" onclick="sortTable('members-roster-table', 1, 'string')">
+                                <span class="inline-flex items-center gap-1">Status <span class="sort-icon text-slate-300 group-hover:text-slate-500 text-xs">↕</span></span>
+                            </th>
+                            <th class="px-6 py-3.5 text-center">Attendance Status</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100">
+                        {% for m in club_members %}
+                        <tr class="hover:bg-slate-50/70 transition-colors roster-row">
+                            <!-- Member Info -->
+                            <td class="px-6 py-3.5" data-sort-val="{{ m.full_name }}">
+                                <div class="flex items-center space-x-3">
+                                    <div class="w-9 h-9 rounded-full bg-slate-100 text-slate-700 font-bold text-xs flex items-center justify-center shrink-0 border border-slate-200 shadow-sm">
+                                        {{ m.full_name[:2].upper() }}
                                     </div>
-                                </label>
-                                {% endfor %}
-                            </div>
-                        </td>
-                    </tr>
-                    {% else %}
-                    <tr class="empty-row">
-                        <td colspan="3" class="py-16 text-center">
-                            <div class="flex flex-col items-center justify-center space-y-3">
-                                <div class="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center text-3xl shadow-inner">
-                                    👥
+                                    <div>
+                                        <div class="text-slate-900 font-semibold text-sm roster-name">{{ m.full_name }}</div>
+                                        <div class="text-slate-500 text-xs">{{ m.email }}</div>
+                                    </div>
                                 </div>
-                                <h4 class="text-[18px] font-semibold text-slate-900">No members or guests found</h4>
-                                <p class="text-[14px] text-slate-500 max-w-sm">
-                                    Add members or log meeting guests first to record attendance.
-                                </p>
-                            </div>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+                            </td>
+
+                            <!-- Status Badge -->
+                            <td class="px-6 py-3.5" data-sort-val="{{ m.member_type }}">
+                                <span class="px-2.5 py-0.5 text-xs font-semibold rounded-full border
+                                    {% if m.member_type == 'Active' %}bg-emerald-50 text-emerald-700 border-emerald-200
+                                    {% elif m.member_type == 'Inactive' %}bg-slate-100 text-slate-600 border-slate-200
+                                    {% else %}bg-indigo-50 text-indigo-700 border-indigo-200{% endif %}">
+                                    {{ m.member_type }}
+                                </span>
+                            </td>
+
+                            <!-- Segmented Status Radios (Present / Absent / Excused) -->
+                            <td class="px-6 py-3.5">
+                                <div class="flex items-center justify-center gap-1 bg-slate-100 p-1 rounded-xl border border-slate-200 max-w-xs mx-auto">
+                                    {% for st in statuses %}
+                                    <label class="flex-1 cursor-pointer">
+                                        <input type="radio" name="status_{{ m.id }}" value="{{ st }}"
+                                               class="peer sr-only status-radio"
+                                               data-status="{{ st }}"
+                                               {% if m.status == st %}checked{% endif %}>
+                                        <div class="text-center py-1.5 px-2.5 text-xs font-semibold rounded-lg transition-all text-slate-600
+                                                    peer-checked:shadow-sm
+                                                    {% if st == 'Present' %}peer-checked:bg-emerald-500 peer-checked:text-white
+                                                    {% elif st == 'Absent' %}peer-checked:bg-red-500 peer-checked:text-white
+                                                    {% elif st == 'Excused' %}peer-checked:bg-amber-500 peer-checked:text-white
+                                                    {% endif %}">
+                                            {{ st }}
+                                        </div>
+                                    </label>
+                                    {% endfor %}
+                                </div>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr class="empty-row">
+                            <td colspan="3" class="py-8 text-center text-slate-400 text-sm">
+                                No club members registered.
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- SECTION 2: GUESTS & PROSPECTS ROSTER -->
+        <div class="card overflow-hidden">
+            <div class="bg-slate-800 text-white px-6 py-4 flex items-center justify-between">
+                <div class="flex items-center gap-2.5">
+                    <i data-lucide="user-check" class="w-5 h-5 text-amber-400"></i>
+                    <h3 class="font-bold text-base tracking-tight">Meeting Guests &amp; Prospects Roster</h3>
+                </div>
+                <span class="px-2.5 py-0.5 text-xs font-semibold rounded-full bg-slate-700 text-amber-300 border border-slate-600">
+                    {{ guests_roster|length }} Guests
+                </span>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-sm text-gray-600" id="guests-roster-table">
+                    <thead class="bg-slate-50 text-[13px] font-semibold uppercase tracking-[0.08em] text-slate-500 border-b border-slate-200 select-none">
+                        <tr>
+                            <th class="px-6 py-3.5 cursor-pointer hover:bg-slate-100/80 transition group" onclick="sortTable('guests-roster-table', 0, 'string')">
+                                <span class="inline-flex items-center gap-1">Guest Name <span class="sort-icon text-slate-300 group-hover:text-slate-500 text-xs">↕</span></span>
+                            </th>
+                            <th class="px-6 py-3.5 cursor-pointer hover:bg-slate-100/80 transition group" onclick="sortTable('guests-roster-table', 1, 'string')">
+                                <span class="inline-flex items-center gap-1">Category <span class="sort-icon text-slate-300 group-hover:text-slate-500 text-xs">↕</span></span>
+                            </th>
+                            <th class="px-6 py-3.5 text-center">Attendance Status</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100">
+                        {% for g in guests_roster %}
+                        <tr class="hover:bg-slate-50/70 transition-colors roster-row">
+                            <!-- Guest Info -->
+                            <td class="px-6 py-3.5" data-sort-val="{{ g.full_name }}">
+                                <div class="flex items-center space-x-3">
+                                    <div class="w-9 h-9 rounded-full bg-amber-50 text-amber-800 font-bold text-xs flex items-center justify-center shrink-0 border border-amber-200 shadow-sm">
+                                        {{ g.full_name[:2].upper() }}
+                                    </div>
+                                    <div>
+                                        <div class="text-slate-900 font-semibold text-sm roster-name">{{ g.full_name }}</div>
+                                        <div class="text-slate-500 text-xs">{{ g.email }}</div>
+                                    </div>
+                                </div>
+                            </td>
+
+                            <!-- Guest Type Badge -->
+                            <td class="px-6 py-3.5" data-sort-val="{{ g.member_type }}">
+                                <span class="px-2.5 py-0.5 text-xs font-semibold rounded-full border bg-amber-50 text-amber-800 border-amber-200">
+                                    Guest / Prospect
+                                </span>
+                            </td>
+
+                            <!-- Segmented Status Radios (Present / Absent / Excused) -->
+                            <td class="px-6 py-3.5">
+                                <div class="flex items-center justify-center gap-1 bg-slate-100 p-1 rounded-xl border border-slate-200 max-w-xs mx-auto">
+                                    {% for st in statuses %}
+                                    <label class="flex-1 cursor-pointer">
+                                        <input type="radio" name="status_{{ g.id }}" value="{{ st }}"
+                                               class="peer sr-only status-radio"
+                                               data-status="{{ st }}"
+                                               {% if g.status == st %}checked{% endif %}>
+                                        <div class="text-center py-1.5 px-2.5 text-xs font-semibold rounded-lg transition-all text-slate-600
+                                                    peer-checked:shadow-sm
+                                                    {% if st == 'Present' %}peer-checked:bg-emerald-500 peer-checked:text-white
+                                                    {% elif st == 'Absent' %}peer-checked:bg-red-500 peer-checked:text-white
+                                                    {% elif st == 'Excused' %}peer-checked:bg-amber-500 peer-checked:text-white
+                                                    {% endif %}">
+                                            {{ st }}
+                                        </div>
+                                    </label>
+                                    {% endfor %}
+                                </div>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr class="empty-row">
+                            <td colspan="3" class="py-8 text-center text-slate-400 text-sm">
+                                No meeting guests logged. Log guests in the Guest Pipeline to track their meeting attendance.
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
         </div>
 
         <!-- Submit Footer -->
-        <div class="p-4 bg-slate-50 border-t border-slate-100 flex justify-between items-center">
+        <div class="p-4 bg-slate-50 rounded-[14px] border border-slate-200 flex justify-between items-center">
             <span class="text-xs text-slate-500">
-                Clicking save will update attendance records in real time.
+                Clicking save will update attendance records for both members and guests in real time.
             </span>
             <button type="submit" class="btn-primary">
                 <i data-lucide="check-check" class="w-4 h-4"></i> Save Attendance

@@ -7,7 +7,7 @@ from ..dependencies import get_current_user
 router = APIRouter(tags=["meetings"])
 templates = Jinja2Templates(directory="app/templates")
 
-ATTENDANCE_STATUSES = ["Present", "Absent", "Excused", "Guest"]
+ATTENDANCE_STATUSES = ["Present", "Absent", "Excused"]
 
 
 def fetch_meetings_with_stats():
@@ -35,14 +35,12 @@ def fetch_meetings_with_stats():
                 att_by_meeting[mid] = {"present": 0, "absent": 0, "excused": 0, "guest": 0, "total": 0}
             
             st = a.get("status")
-            if st == "Present":
+            if st == "Present" or st == "Guest":
                 att_by_meeting[mid]["present"] += 1
             elif st == "Absent":
                 att_by_meeting[mid]["absent"] += 1
             elif st == "Excused":
                 att_by_meeting[mid]["excused"] += 1
-            elif st == "Guest":
-                att_by_meeting[mid]["guest"] += 1
             att_by_meeting[mid]["total"] += 1
 
         for m in meetings:
@@ -135,11 +133,12 @@ async def get_latest_meeting_attendance(request: Request, user=Depends(get_curre
 @router.get("/meetings/{meeting_id}/attendance", response_class=HTMLResponse)
 async def get_meeting_attendance_sheet(request: Request, meeting_id: int, user=Depends(get_current_user)):
     """
-    Fetches meeting details, member roster, and existing attendance statuses
-    to render the interactive batch check-in sheet.
+    Fetches meeting details, separates members and guests into distinct rosters,
+    and renders the interactive batch check-in sheet with Present/Absent/Excused statuses.
     """
     meeting = None
-    members_roster = []
+    club_members = []
+    guests_roster = []
 
     if supabase:
         try:
@@ -156,24 +155,29 @@ async def get_meeting_attendance_sheet(request: Request, meeting_id: int, user=D
             att_res = supabase.table("attendance").select("*").eq("meeting_id", meeting_id).execute()
             existing_att = {a["member_id"]: a["status"] for a in (att_res.data or [])}
 
-            # 4. Assemble roster
+            # 4. Assemble rosters separately
             for mem in all_members:
                 mid = mem["id"]
                 recorded_status = existing_att.get(mid)
                 
-                # Default status if not recorded: Present for Active, Guest for Prospect
-                if not recorded_status:
-                    default_status = "Guest" if mem.get("status") == "Prospect" else "Present"
+                # Map recorded status: if legacy 'Guest' or missing, default to 'Present'
+                if not recorded_status or recorded_status == "Guest":
+                    default_status = "Present"
                 else:
                     default_status = recorded_status
 
-                members_roster.append({
+                entry = {
                     "id": mid,
                     "full_name": mem.get("full_name", ""),
                     "email": mem.get("email", ""),
                     "member_type": mem.get("status", "Active"),
                     "status": default_status
-                })
+                }
+
+                if mem.get("status") == "Prospect":
+                    guests_roster.append(entry)
+                else:
+                    club_members.append(entry)
 
         except Exception as e:
             print(f"Error fetching meeting attendance sheet: {e}")
@@ -182,7 +186,9 @@ async def get_meeting_attendance_sheet(request: Request, meeting_id: int, user=D
         "request": request,
         "meeting": meeting,
         "meeting_id": meeting_id,
-        "members": members_roster,
+        "club_members": club_members,
+        "guests_roster": guests_roster,
+        "total_people": len(club_members) + len(guests_roster),
         "statuses": ATTENDANCE_STATUSES,
         "active_page": "attendance"
     }
@@ -207,13 +213,14 @@ async def save_batch_attendance(request: Request, user=Depends(get_current_user)
     except ValueError:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid meeting_id")
 
+    allowed_statuses = ATTENDANCE_STATUSES + ["Guest"]
     attendance_records = []
     for key, value in form_data.items():
         if key.startswith("status_"):
             try:
                 member_id = int(key.replace("status_", ""))
                 status_val = str(value)
-                if status_val in ATTENDANCE_STATUSES:
+                if status_val in allowed_statuses:
                     attendance_records.append({
                         "meeting_id": meeting_id,
                         "member_id": member_id,
@@ -235,10 +242,11 @@ async def save_batch_attendance(request: Request, user=Depends(get_current_user)
     context = {
         "request": request,
         "meetings": meetings,
-        "success_message": f"Attendance successfully recorded for Meeting #{meeting_id} ({len(attendance_records)} members logged).",
+        "success_message": f"Attendance successfully recorded for Meeting #{meeting_id} ({len(attendance_records)} people logged).",
         "active_page": "attendance"
     }
     return templates.TemplateResponse(request, "partials/meetings.html", context)
+
 
 
 @router.get("/meetings/live", response_class=HTMLResponse)
