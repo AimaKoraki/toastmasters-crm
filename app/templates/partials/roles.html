@@ -1,5 +1,26 @@
-<div class="space-y-6">
-    <!-- Success Banner -->
+{% set major_role_list = all_roles | selectattr("category", "equalto", "Major") | list %}
+{% set func_role_list  = all_roles | selectattr("category", "equalto", "Functional") | list %}
+
+{% set total_assignments = namespace(n=0) %}
+{% set major_members = namespace(n=0) %}
+{% set func_members = namespace(n=0) %}
+{% for row in matrix %}
+    {% set total_assignments.n = total_assignments.n + row.total_roles %}
+    {% set has_major = namespace(v=false) %}
+    {% set has_func = namespace(v=false) %}
+    {% for r in major_role_list %}
+        {% if row.role_counts.get(r.id, 0) > 0 %}{% set has_major.v = true %}{% endif %}
+    {% endfor %}
+    {% for r in func_role_list %}
+        {% if row.role_counts.get(r.id, 0) > 0 %}{% set has_func.v = true %}{% endif %}
+    {% endfor %}
+    {% if has_major.v %}{% set major_members.n = major_members.n + 1 %}{% endif %}
+    {% if has_func.v %}{% set func_members.n = func_members.n + 1 %}{% endif %}
+{% endfor %}
+
+<div class="space-y-5">
+
+    <!-- ── Success Banner ───────────────────────────────────────────── -->
     {% if success_message %}
     <div class="toast-trigger hidden" data-toast-message="{{ success_message }}" data-toast-type="success"></div>
     <div class="flex items-center justify-between gap-3 bg-emerald-50 border border-emerald-200 text-emerald-800 px-4 py-3 rounded-[12px] shadow-sm">
@@ -13,7 +34,21 @@
     </div>
     {% endif %}
 
-    <!-- Header with Title & CTA -->
+    <!-- ── Warning Banner ───────────────────────────────────────────── -->
+    {% if warning_message %}
+    <div class="toast-trigger hidden" data-toast-message="{{ warning_message }}" data-toast-type="warning"></div>
+    <div class="flex items-center justify-between gap-3 bg-amber-50 border border-amber-200 text-amber-800 px-4 py-3 rounded-[12px] shadow-sm">
+        <div class="flex items-center gap-2">
+            <i data-lucide="alert-triangle" class="w-5 h-5 text-amber-500 shrink-0"></i>
+            <span class="text-sm font-medium">{{ warning_message }}</span>
+        </div>
+        <button onclick="this.parentElement.remove()" class="text-amber-500 hover:text-amber-700">
+            <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+    </div>
+    {% endif %}
+
+    <!-- ── Page Header ──────────────────────────────────────────────── -->
     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-6 rounded-[14px] border border-[#E5E9E8] shadow-sm">
         <div>
             <div class="flex items-center gap-3">
@@ -28,30 +63,45 @@
         </div>
         <button hx-get="/roles/assign" hx-target="#modal-container"
                 class="btn-primary shrink-0 shadow-sm hover:shadow">
-            <i data-lucide="award" class="w-4 h-4"></i> ＋ Assign Role
+            <i data-lucide="award" class="w-4 h-4"></i> ＋ Assign Role(s)
         </button>
     </div>
 
-    <!-- Category Filter Tabs & Member Search -->
-    <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 bg-white p-3 rounded-[12px] border border-[#E5E9E8]">
-        <!-- Category Filter Tabs -->
-        <div class="flex items-center gap-1 overflow-x-auto pb-1 md:pb-0 text-sm">
-            <button hx-get="/roles?category=all" hx-target="#main-content"
-                    class="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all {% if active_category == 'all' or not active_category %}bg-[#2563eb] text-white shadow-sm{% else %}text-slate-600 hover:bg-slate-100{% endif %}">
-                All Roles ({{ all_roles|length }})
-            </button>
-            <button hx-get="/roles?category=Major" hx-target="#main-content"
-                    class="px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all {% if active_category == 'Major' %}bg-[#2563eb] text-white shadow-sm{% else %}text-slate-600 hover:bg-slate-100{% endif %}">
-                Major Roles
-            </button>
-            <button hx-get="/roles?category=Functional" hx-target="#main-content"
-                    class="px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all {% if active_category == 'Functional' %}bg-[#2563eb] text-white shadow-sm{% else %}text-slate-600 hover:bg-slate-100{% endif %}">
-                Functional Roles
-            </button>
+    <!-- ── Summary Stats Strip ──────────────────────────────────────── -->
+    <div class="grid grid-cols-3 gap-3">
+        <div class="bg-white rounded-[12px] border border-[#E5E9E8] px-5 py-4 flex items-center gap-3 shadow-sm">
+            <div class="w-9 h-9 rounded-lg bg-slate-100 flex items-center justify-center shrink-0">
+                <i data-lucide="layers" class="w-4 h-4 text-slate-600"></i>
+            </div>
+            <div>
+                <div class="text-[22px] font-bold text-slate-900 leading-tight">{{ total_assignments.n }}</div>
+                <div class="text-[11px] text-slate-500 font-medium uppercase tracking-wider">Total Assignments</div>
+            </div>
         </div>
+        <div class="bg-white rounded-[12px] border border-[#E5E9E8] px-5 py-4 flex items-center gap-3 shadow-sm">
+            <div class="w-9 h-9 rounded-lg bg-blue-50 flex items-center justify-center shrink-0">
+                <i data-lucide="star" class="w-4 h-4 text-blue-600"></i>
+            </div>
+            <div>
+                <div class="text-[22px] font-bold text-blue-700 leading-tight">{{ major_members.n }}</div>
+                <div class="text-[11px] text-slate-500 font-medium uppercase tracking-wider">With Major Roles</div>
+            </div>
+        </div>
+        <div class="bg-white rounded-[12px] border border-[#E5E9E8] px-5 py-4 flex items-center gap-3 shadow-sm">
+            <div class="w-9 h-9 rounded-lg bg-amber-50 flex items-center justify-center shrink-0">
+                <i data-lucide="wrench" class="w-4 h-4 text-amber-600"></i>
+            </div>
+            <div>
+                <div class="text-[22px] font-bold text-amber-700 leading-tight">{{ func_members.n }}</div>
+                <div class="text-[11px] text-slate-500 font-medium uppercase tracking-wider">With Functional Roles</div>
+            </div>
+        </div>
+    </div>
 
-        <!-- Member Search with Clear Button -->
-        <div class="relative w-full md:w-64">
+    <!-- ── Toolbar: Search + Legend ─────────────────────────────────── -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white px-4 py-3 rounded-[12px] border border-[#E5E9E8]">
+        <!-- Member Search -->
+        <div class="relative w-full sm:w-64">
             <i data-lucide="search" class="w-4 h-4 absolute left-3 top-2.5 text-slate-400"></i>
             <input type="text" id="role-search" oninput="handleRoleSearch(this)" placeholder="Search member name..."
                    class="w-full pl-9 pr-8 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:bg-white transition">
@@ -59,95 +109,118 @@
                 <i data-lucide="x" class="w-3.5 h-3.5"></i>
             </button>
         </div>
+
+        <!-- Color Legend -->
+        <div class="flex items-center gap-3 text-[11px] text-slate-500 font-medium shrink-0">
+            <span class="font-semibold text-slate-600">Legend:</span>
+            <span class="inline-flex items-center gap-1.5">
+                <span class="inline-block w-5 h-5 rounded-md border border-slate-200 text-slate-300 text-center leading-5 text-xs font-mono">—</span> Never
+            </span>
+            <span class="inline-flex items-center gap-1.5">
+                <span class="inline-flex items-center justify-center w-5 h-5 rounded-md bg-blue-50 text-blue-700 border border-blue-200 text-xs font-bold">1</span> 1–2×
+            </span>
+            <span class="inline-flex items-center gap-1.5">
+                <span class="inline-flex items-center justify-center w-5 h-5 rounded-md bg-amber-100 text-amber-900 border border-amber-300 text-xs font-bold">3</span> 3+×
+            </span>
+        </div>
     </div>
 
-    <!-- Matrix Table Card -->
+    {% if not matrix %}
+    <!-- ── Empty State ───────────────────────────────────────────────── -->
+    <div class="card py-16 text-center">
+        <div class="flex flex-col items-center justify-center space-y-3">
+            <div class="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center text-3xl shadow-inner">🎭</div>
+            <h4 class="text-[18px] font-semibold text-slate-900">No role assignments recorded</h4>
+            <p class="text-[14px] text-slate-500 max-w-sm">Assign meeting roles to members to start tracking role participation frequency.</p>
+            <button class="btn-primary mt-2" hx-get="/roles/assign" hx-target="#modal-container">
+                <i data-lucide="award" class="w-4 h-4"></i> ＋ Assign First Role
+            </button>
+        </div>
+    </div>
+    {% else %}
+
+    <!-- ══ MAJOR ROLES TABLE ════════════════════════════════════════════ -->
+    {% if major_role_list %}
     <div class="card overflow-hidden">
+        <!-- Sub-header -->
+        <div class="flex items-center gap-3 px-5 py-3.5 bg-blue-50/60 border-b border-blue-100">
+            <i data-lucide="star" class="w-4 h-4 text-blue-600 shrink-0"></i>
+            <h3 class="text-sm font-bold text-blue-800 uppercase tracking-wider">Major Roles</h3>
+            <span class="ml-auto text-xs text-blue-500 font-medium">{{ major_role_list | length }} roles</span>
+        </div>
         <div class="overflow-x-auto">
-            <table class="w-full text-left text-sm text-gray-600" id="matrix-table">
-                <thead class="bg-slate-50 text-[12px] font-semibold uppercase tracking-[0.08em] text-slate-500 border-b border-slate-200 select-none">
+            <table class="w-full text-left text-sm text-gray-600" id="major-matrix-table">
+                <thead class="bg-slate-50 text-[11px] font-bold uppercase tracking-[0.08em] text-slate-500 border-b border-slate-200 select-none">
                     <tr>
-                        <th class="px-5 py-3.5 sticky left-0 bg-slate-50 z-10 border-r border-slate-200 shadow-[2px_0_4px_-2px_rgba(0,0,0,0.08)] cursor-pointer hover:bg-slate-100/80 transition group" onclick="sortTable('matrix-table', 0, 'string')">
+                        <th class="px-5 py-3 sticky left-0 bg-slate-50 z-10 border-r border-slate-200 shadow-[2px_0_4px_-2px_rgba(0,0,0,0.08)] cursor-pointer hover:bg-slate-100 transition group min-w-[160px]"
+                            onclick="sortTable('major-matrix-table', 0, 'string')">
                             <span class="inline-flex items-center gap-1">Member <span class="sort-icon text-slate-300 group-hover:text-slate-500 text-xs">↕</span></span>
                         </th>
-                        <th class="px-3 py-3.5 text-center cursor-pointer hover:bg-slate-100/80 transition group" onclick="sortTable('matrix-table', 1, 'number')">
+                        <th class="px-3 py-3 text-center cursor-pointer hover:bg-slate-100 transition group w-14"
+                            onclick="sortTable('major-matrix-table', 1, 'number')">
                             <span class="inline-flex items-center gap-1">Total <span class="sort-icon text-slate-300 group-hover:text-slate-500 text-xs">↕</span></span>
                         </th>
-                        {% for r in roles %}
-                        <th class="px-3 py-3.5 text-center whitespace-nowrap">
-                            <span class="inline-block" title="{{ r.category }}">{{ r.role_name }}</span>
+                        {% for r in major_role_list %}
+                        <th class="px-3 py-3 text-center w-24">
+                            <span class="block truncate max-w-[90px] mx-auto" title="{{ r.role_name }}">
+                                {{ r.role_name | replace("Toastmaster of the Day (TMOD)", "TMOD")
+                                              | replace("Table Topics Master (TTM)", "TTM")
+                                              | replace("General Evaluator (GE)", "Gen. Eval.")
+                                              | replace("Speech Evaluator", "Sp. Eval.")
+                                              | replace("Table Topics Evaluator", "TT Eval.") }}
+                            </span>
                         </th>
                         {% endfor %}
-                        <th class="px-4 py-3.5 text-right">Details</th>
+                        <th class="px-4 py-3 text-right w-14">History</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-100">
                     {% for row in matrix %}
+                    {% set row_major_total = namespace(n=0) %}
+                    {% for r in major_role_list %}{% set row_major_total.n = row_major_total.n + row.role_counts.get(r.id, 0) %}{% endfor %}
                     <tr class="hover:bg-slate-50/70 transition-colors matrix-row">
-                        <!-- Member Name & Avatar (Sticky Left Column) -->
-                        <td class="px-5 py-3.5 sticky left-0 bg-white z-10 border-r border-slate-200 shadow-[2px_0_4px_-2px_rgba(0,0,0,0.06)]" data-sort-val="{{ row.full_name }}">
-                            <div class="flex items-center space-x-3">
-                                <div class="w-8 h-8 rounded-full bg-slate-100 text-slate-700 font-bold text-xs flex items-center justify-center shrink-0 border border-slate-200 shadow-sm">
+                        <!-- Member Name -->
+                        <td class="px-5 py-3 sticky left-0 bg-white z-10 border-r border-slate-200 shadow-[2px_0_4px_-2px_rgba(0,0,0,0.06)]" data-sort-val="{{ row.full_name }}">
+                            <div class="flex items-center space-x-2.5">
+                                <div class="w-7 h-7 rounded-full bg-slate-100 text-slate-700 font-bold text-[10px] flex items-center justify-center shrink-0 border border-slate-200">
                                     {{ row.full_name[:2].upper() }}
                                 </div>
                                 <div>
-                                    <div class="text-slate-900 font-semibold text-xs matrix-member-name">{{ row.full_name }}</div>
-                                    <div class="text-slate-400 text-[11px]">{{ row.pathway_level or row.status }}</div>
+                                    <div class="text-slate-900 font-semibold text-xs matrix-member-name leading-tight">{{ row.full_name }}</div>
+                                    <div class="text-slate-400 text-[10px]">{{ row.pathway_level or row.status }}</div>
                                 </div>
                             </div>
                         </td>
-
-                        <!-- Total Roles Badge -->
-                        <td class="px-3 py-3.5 text-center" data-sort-val="{{ row.total_roles }}">
-                            <span class="inline-block px-2 py-0.5 text-xs font-bold rounded-full 
-                                {% if row.total_roles > 4 %}bg-amber-100 text-amber-900 border border-amber-300
-                                {% elif row.total_roles > 0 %}bg-blue-50 text-blue-700 border border-blue-200
+                        <!-- Major Total -->
+                        <td class="px-3 py-3 text-center" data-sort-val="{{ row_major_total.n }}">
+                            <span class="inline-block px-2 py-0.5 text-xs font-bold rounded-full
+                                {% if row_major_total.n > 4 %}bg-amber-100 text-amber-900 border border-amber-300
+                                {% elif row_major_total.n > 0 %}bg-blue-50 text-blue-700 border border-blue-200
                                 {% else %}bg-slate-100 text-slate-400{% endif %}">
-                                {{ row.total_roles }}
+                                {{ row_major_total.n }}
                             </span>
                         </td>
-
-                        <!-- Role Count Cells with Heatmap Shading -->
-                        {% for r in roles %}
+                        <!-- Role Cells -->
+                        {% for r in major_role_list %}
                         {% set cnt = row.role_counts.get(r.id, 0) %}
-                        <td class="px-3 py-3.5 text-center" data-sort-val="{{ cnt }}">
+                        <td class="px-3 py-3 text-center" data-sort-val="{{ cnt }}">
                             {% if cnt > 2 %}
-                            <span class="inline-flex items-center justify-center w-6 h-6 rounded-md bg-amber-100 text-amber-900 font-bold text-xs border border-amber-300 shadow-xs" title="{{ cnt }} times as {{ r.role_name }}">
-                                {{ cnt }}
-                            </span>
+                            <span class="inline-flex items-center justify-center w-6 h-6 rounded-md bg-amber-100 text-amber-900 font-bold text-xs border border-amber-300"
+                                  title="{{ cnt }}× as {{ r.role_name }}">{{ cnt }}</span>
                             {% elif cnt > 0 %}
-                            <span class="inline-flex items-center justify-center w-6 h-6 rounded-md bg-blue-50 text-blue-700 font-semibold text-xs border border-blue-200" title="{{ cnt }} times as {{ r.role_name }}">
-                                {{ cnt }}
-                            </span>
+                            <span class="inline-flex items-center justify-center w-6 h-6 rounded-md bg-blue-50 text-blue-700 font-semibold text-xs border border-blue-200"
+                                  title="{{ cnt }}× as {{ r.role_name }}">{{ cnt }}</span>
                             {% else %}
                             <span class="text-slate-200 text-xs font-mono">—</span>
                             {% endif %}
                         </td>
                         {% endfor %}
-
-                        <!-- Member History CTA -->
-                        <td class="px-4 py-3.5 text-right whitespace-nowrap">
+                        <!-- History -->
+                        <td class="px-4 py-3 text-right">
                             <button hx-get="/roles/member/{{ row.id }}/history" hx-target="#modal-container"
-                                    class="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition" title="View Member Role History">
+                                    class="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition" title="View Role History">
                                 <i data-lucide="history" class="w-4 h-4"></i>
                             </button>
-                        </td>
-                    </tr>
-                    {% else %}
-                    <tr class="empty-row">
-                        <td colspan="{{ (roles|length) + 3 }}" class="py-16 text-center">
-                            <div class="flex flex-col items-center justify-center space-y-3">
-                                <div class="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center text-3xl shadow-inner">
-                                    🎭
-                                </div>
-                                <h4 class="text-[18px] font-semibold text-slate-900">No role assignments recorded</h4>
-                                <p class="text-[14px] text-slate-500 max-w-sm">
-                                    Assign meeting roles to members to start tracking role participation frequency.
-                                </p>
-                                <button class="btn-primary mt-2" hx-get="/roles/assign" hx-target="#modal-container">
-                                    <i data-lucide="award" class="w-4 h-4"></i> ＋ Assign First Role
-                                </button>
-                            </div>
                         </td>
                     </tr>
                     {% endfor %}
@@ -155,24 +228,111 @@
             </table>
         </div>
     </div>
+    {% endif %}
+
+    <!-- ══ FUNCTIONAL ROLES TABLE ═══════════════════════════════════════ -->
+    {% if func_role_list %}
+    <div class="card overflow-hidden">
+        <!-- Sub-header -->
+        <div class="flex items-center gap-3 px-5 py-3.5 bg-amber-50/60 border-b border-amber-100">
+            <i data-lucide="wrench" class="w-4 h-4 text-amber-600 shrink-0"></i>
+            <h3 class="text-sm font-bold text-amber-800 uppercase tracking-wider">Functional Roles</h3>
+            <span class="ml-auto text-xs text-amber-500 font-medium">{{ func_role_list | length }} roles</span>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="w-full text-left text-sm text-gray-600" id="func-matrix-table">
+                <thead class="bg-slate-50 text-[11px] font-bold uppercase tracking-[0.08em] text-slate-500 border-b border-slate-200 select-none">
+                    <tr>
+                        <th class="px-5 py-3 sticky left-0 bg-slate-50 z-10 border-r border-slate-200 shadow-[2px_0_4px_-2px_rgba(0,0,0,0.08)] cursor-pointer hover:bg-slate-100 transition group min-w-[160px]"
+                            onclick="sortTable('func-matrix-table', 0, 'string')">
+                            <span class="inline-flex items-center gap-1">Member <span class="sort-icon text-slate-300 group-hover:text-slate-500 text-xs">↕</span></span>
+                        </th>
+                        <th class="px-3 py-3 text-center cursor-pointer hover:bg-slate-100 transition group w-14"
+                            onclick="sortTable('func-matrix-table', 1, 'number')">
+                            <span class="inline-flex items-center gap-1">Total <span class="sort-icon text-slate-300 group-hover:text-slate-500 text-xs">↕</span></span>
+                        </th>
+                        {% for r in func_role_list %}
+                        <th class="px-3 py-3 text-center w-24">
+                            <span class="block truncate max-w-[90px] mx-auto" title="{{ r.role_name }}">
+                                {{ r.role_name | replace("Table Topics Evaluator", "TT Eval.")
+                                              | replace("Ah-Counter", "Ah-Ctr")
+                                              | replace("Grammarian", "Gram.") }}
+                            </span>
+                        </th>
+                        {% endfor %}
+                        <th class="px-4 py-3 text-right w-14">History</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100">
+                    {% for row in matrix %}
+                    {% set row_func_total = namespace(n=0) %}
+                    {% for r in func_role_list %}{% set row_func_total.n = row_func_total.n + row.role_counts.get(r.id, 0) %}{% endfor %}
+                    <tr class="hover:bg-slate-50/70 transition-colors matrix-row">
+                        <!-- Member Name -->
+                        <td class="px-5 py-3 sticky left-0 bg-white z-10 border-r border-slate-200 shadow-[2px_0_4px_-2px_rgba(0,0,0,0.06)]" data-sort-val="{{ row.full_name }}">
+                            <div class="flex items-center space-x-2.5">
+                                <div class="w-7 h-7 rounded-full bg-slate-100 text-slate-700 font-bold text-[10px] flex items-center justify-center shrink-0 border border-slate-200">
+                                    {{ row.full_name[:2].upper() }}
+                                </div>
+                                <div>
+                                    <div class="text-slate-900 font-semibold text-xs matrix-member-name leading-tight">{{ row.full_name }}</div>
+                                    <div class="text-slate-400 text-[10px]">{{ row.pathway_level or row.status }}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <!-- Functional Total -->
+                        <td class="px-3 py-3 text-center" data-sort-val="{{ row_func_total.n }}">
+                            <span class="inline-block px-2 py-0.5 text-xs font-bold rounded-full
+                                {% if row_func_total.n > 4 %}bg-amber-100 text-amber-900 border border-amber-300
+                                {% elif row_func_total.n > 0 %}bg-amber-50 text-amber-700 border border-amber-200
+                                {% else %}bg-slate-100 text-slate-400{% endif %}">
+                                {{ row_func_total.n }}
+                            </span>
+                        </td>
+                        <!-- Role Cells -->
+                        {% for r in func_role_list %}
+                        {% set cnt = row.role_counts.get(r.id, 0) %}
+                        <td class="px-3 py-3 text-center" data-sort-val="{{ cnt }}">
+                            {% if cnt > 2 %}
+                            <span class="inline-flex items-center justify-center w-6 h-6 rounded-md bg-amber-100 text-amber-900 font-bold text-xs border border-amber-300"
+                                  title="{{ cnt }}× as {{ r.role_name }}">{{ cnt }}</span>
+                            {% elif cnt > 0 %}
+                            <span class="inline-flex items-center justify-center w-6 h-6 rounded-md bg-amber-50 text-amber-700 font-semibold text-xs border border-amber-200"
+                                  title="{{ cnt }}× as {{ r.role_name }}">{{ cnt }}</span>
+                            {% else %}
+                            <span class="text-slate-200 text-xs font-mono">—</span>
+                            {% endif %}
+                        </td>
+                        {% endfor %}
+                        <!-- History -->
+                        <td class="px-4 py-3 text-right">
+                            <button hx-get="/roles/member/{{ row.id }}/history" hx-target="#modal-container"
+                                    class="p-1.5 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition" title="View Role History">
+                                <i data-lucide="history" class="w-4 h-4"></i>
+                            </button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+
+    {% endif %}{# end if matrix #}
 </div>
 
 <script>
 function handleRoleSearch(input) {
     const clearBtn = document.getElementById('role-search-clear');
-    if (clearBtn) {
-        clearBtn.classList.toggle('hidden', !input.value);
-    }
+    if (clearBtn) clearBtn.classList.toggle('hidden', !input.value);
     filterRoleMatrix();
 }
 
 function clearRoleSearch() {
     const input = document.getElementById('role-search');
     const clearBtn = document.getElementById('role-search-clear');
-    if (input) {
-        input.value = '';
-        input.focus();
-    }
+    if (input) { input.value = ''; input.focus(); }
     if (clearBtn) clearBtn.classList.add('hidden');
     filterRoleMatrix();
 }
@@ -180,9 +340,7 @@ function clearRoleSearch() {
 function filterRoleMatrix() {
     const input = document.getElementById('role-search');
     const filter = input ? input.value.toLowerCase() : '';
-    const rows = document.querySelectorAll('.matrix-row');
-
-    rows.forEach(row => {
+    document.querySelectorAll('.matrix-row').forEach(row => {
         const name = row.querySelector('.matrix-member-name')?.textContent.toLowerCase() || '';
         row.style.display = name.includes(filter) ? '' : 'none';
     });

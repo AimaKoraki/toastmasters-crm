@@ -6,12 +6,26 @@
 
         <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 relative z-10">
             <div>
-                <div class="flex items-center gap-3">
+                <div class="flex items-center gap-3 flex-wrap">
                     <span class="relative flex h-3 w-3">
                         <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
                         <span class="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
                     </span>
                     <span class="text-xs font-bold uppercase tracking-widest text-amber-400">Live Meeting Mode</span>
+                    
+                    {% if all_meetings and all_meetings|length > 1 %}
+                    <div class="flex items-center gap-1.5 ml-0 sm:ml-2">
+                        <span class="text-[11px] text-slate-400">Switch:</span>
+                        <select class="bg-slate-800 text-amber-300 border border-slate-700 rounded-lg px-2.5 py-1 text-xs font-semibold focus:ring-2 focus:ring-blue-500 cursor-pointer"
+                                onchange="htmx.ajax('GET', '/meetings/' + this.value + '/live', '#main-content')">
+                            {% for m in all_meetings %}
+                            <option value="{{ m.id }}" {% if meeting and meeting.id == m.id %}selected{% endif %}>
+                                Meeting #{{ m.meeting_number }}{% if m.theme %} - {{ m.theme }}{% endif %} ({{ m.meeting_date }})
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    {% endif %}
                 </div>
                 <h2 class="text-[28px] font-bold text-white tracking-tight mt-1">
                     Meeting #{{ meeting.meeting_number if meeting else '—' }}
@@ -33,10 +47,12 @@
 
             <!-- Quick Meeting Controls -->
             <div class="flex items-center gap-2 flex-wrap">
+                {% if meeting %}
                 <button hx-get="/meetings/{{ meeting.id }}/attendance" hx-target="#main-content"
                         class="px-3.5 py-2 rounded-lg bg-white/10 hover:bg-white/20 text-white font-semibold text-xs transition flex items-center gap-1.5 border border-white/20">
                     <i data-lucide="calendar-check" class="w-3.5 h-3.5 text-emerald-400"></i> Mark Attendance
                 </button>
+                {% endif %}
                 <button hx-get="/roles/assign" hx-target="#modal-container"
                         class="px-3.5 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs transition flex items-center gap-1.5 shadow-sm">
                     <i data-lucide="award" class="w-3.5 h-3.5 text-amber-300"></i> Assign Role
@@ -100,7 +116,7 @@
                             {% else %}
                             <tr>
                                 <td colspan="3" class="py-10 text-center">
-                                    <div class="text-slate-400 text-xs">No roles assigned to this meeting yet.</div>
+                                    <div class="text-slate-400 text-xs">No roles assigned to Meeting #{{ meeting.meeting_number if meeting else '?' }} yet.</div>
                                     <button hx-get="/roles/assign" hx-target="#modal-container" class="btn-primary mt-3 text-xs">
                                         <i data-lucide="award" class="w-3.5 h-3.5"></i> Assign Roles Now
                                     </button>
@@ -121,7 +137,7 @@
                     <h3 class="text-base font-bold text-slate-900 flex items-center gap-2">
                         <i data-lucide="calendar-check" class="w-4 h-4 text-emerald-600"></i> Attendance Status
                     </h3>
-                    <span class="text-xs font-bold text-slate-500 font-mono">{{ attendance_stats.total }} Logged</span>
+                    <span class="text-xs font-bold text-slate-500 font-mono">{{ attendance_stats.total }} Total</span>
                 </div>
 
                 <div class="grid grid-cols-2 gap-3">
@@ -143,9 +159,46 @@
                     </div>
                 </div>
 
+                {% if meeting %}
                 <button hx-get="/meetings/{{ meeting.id }}/attendance" hx-target="#main-content"
                         class="w-full btn-primary justify-center text-xs">
                     <i data-lucide="check-square" class="w-4 h-4"></i> Open Attendance Check-in Sheet
+                </button>
+                {% endif %}
+            </div>
+
+            <!-- Registered Guests Roster Card -->
+            <div class="card p-5 space-y-3">
+                <div class="flex justify-between items-center pb-2 border-b border-slate-100">
+                    <h4 class="text-sm font-bold text-slate-900 flex items-center gap-2">
+                        <i data-lucide="users" class="w-4 h-4 text-sky-600"></i> Registered Guests Roster
+                    </h4>
+                    <span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-sky-50 text-sky-700 border border-sky-200">
+                        {{ meeting_guests|length }}
+                    </span>
+                </div>
+
+                <div class="space-y-2 max-h-56 overflow-y-auto divide-y divide-slate-100">
+                    {% for g in meeting_guests %}
+                    <div class="pt-2 first:pt-0 flex items-center justify-between text-xs">
+                        <div>
+                            <div class="font-semibold text-slate-900">{{ g.full_name }}</div>
+                            <div class="text-slate-500 text-[11px]">{{ g.email }}</div>
+                        </div>
+                        <span class="px-2 py-0.5 rounded text-[10px] font-medium bg-sky-50 text-sky-700 border border-sky-200">
+                            Guest
+                        </span>
+                    </div>
+                    {% else %}
+                    <div class="text-xs text-slate-400 py-3 text-center">
+                        No guests registered yet.
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <button hx-get="/prospects/new" hx-target="#modal-container"
+                        class="w-full py-1.5 text-xs font-semibold text-sky-700 bg-sky-50 hover:bg-sky-100 rounded-lg border border-sky-200 transition flex items-center justify-center gap-1">
+                    <i data-lucide="user-plus" class="w-3.5 h-3.5"></i> ＋ Register New Guest
                 </button>
             </div>
         </div>

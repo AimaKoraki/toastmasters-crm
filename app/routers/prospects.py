@@ -19,15 +19,15 @@ def fetch_prospects_data(stage_filter: str = "all"):
         return prospects
 
     try:
-        # Fetch members with status Prospect or recently Onboarded
+        # Fetch members ordered by created_at descending
         res = supabase.table("members").select("*").order("created_at", desc=True).execute()
         all_members = res.data or []
 
-        # Fetch all prospect logs sorted chronologically descending
-        logs_res = supabase.table("prospect_logs").select("*").order("created_at", desc=True).execute()
+        # Fetch all prospect logs sorted chronologically descending by ID (most recent first)
+        logs_res = supabase.table("prospect_logs").select("*").order("id", desc=True).execute()
         all_logs = logs_res.data or []
 
-        # Group logs by member_id
+        # Group logs by member_id (first item in array is the most recent log)
         member_logs = {}
         for log in all_logs:
             mid = log.get("member_id")
@@ -40,19 +40,22 @@ def fetch_prospects_data(stage_filter: str = "all"):
             mid = m["id"]
             logs = member_logs.get(mid, [])
             
-            # Determine latest stage from logs or default to '1st Visit'
+            # Skip regular members who have never been in the prospect pipeline
+            if not logs and m.get("status") != "Prospect":
+                continue
+
+            # Determine latest stage from the most recent log or default
             if logs:
                 latest_log = logs[0]
                 current_stage = latest_log.get("stage", "1st Visit")
                 latest_notes = latest_log.get("notes", "")
                 last_contacted = latest_log.get("last_contacted") or latest_log.get("created_at", "")
             else:
-                current_stage = "1st Visit" if m.get("status") == "Prospect" else "Onboarded"
+                current_stage = "1st Visit"
                 latest_notes = ""
                 last_contacted = m.get("created_at", "")
 
-            # Filter criteria:
-            # If status is Active and stage is not in logs as Onboarded, skip (regular member)
+            # If status is not Prospect and stage is not Onboarded, skip
             if m.get("status") != "Prospect" and current_stage != "Onboarded":
                 continue
 
@@ -78,7 +81,7 @@ def fetch_prospects_data(stage_filter: str = "all"):
                 "next_stage": next_stage
             }
 
-            # Apply stage filter
+            # Apply stage filter (case-insensitive)
             if stage_filter == "all" or stage_filter == "" or prospect_entry["stage"].lower() == stage_filter.lower():
                 prospects.append(prospect_entry)
 
@@ -88,6 +91,7 @@ def fetch_prospects_data(stage_filter: str = "all"):
     return prospects
 
 
+@router.get("", response_class=HTMLResponse)
 @router.get("/", response_class=HTMLResponse)
 async def get_prospects(request: Request, stage: str = "all", user=Depends(get_current_user)):
     prospects = fetch_prospects_data(stage_filter=stage)
@@ -113,6 +117,7 @@ async def get_new_prospect_modal(request: Request, user=Depends(get_current_user
     return templates.TemplateResponse(request, "partials/prospect_modal.html", context)
 
 
+@router.post("", response_class=HTMLResponse)
 @router.post("/", response_class=HTMLResponse)
 async def add_prospect(
     request: Request,
@@ -126,25 +131,53 @@ async def add_prospect(
     if initial_stage not in STAGES:
         initial_stage = "1st Visit"
 
+    cleaned_email = email.strip().lower()
+    cleaned_name = full_name.strip()
+
     if supabase:
         try:
+            # 1. Check for duplicate email across all members & prospects (case-insensitive)
+            existing = supabase.table("members").select("id, full_name, status").ilike("email", cleaned_email).execute()
+            if existing.data:
+                existing_record = existing.data[0]
+                record_type = "member" if existing_record.get("status") == "Active" else "guest"
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=f"A {record_type} with email '{cleaned_email}' already exists ({existing_record.get('full_name')})."
+                )
+
+            # 2. Insert new prospect into members table
             new_prospect = {
-                "full_name": full_name.strip(),
-                "email": email.strip(),
+                "full_name": cleaned_name,
+                "email": cleaned_email,
                 "phone": phone.strip() if phone else None,
                 "status": "Prospect" if initial_stage != "Onboarded" else "Active"
             }
             res = supabase.table("members").insert(new_prospect).execute()
-            if res.data:
-                member_id = res.data[0]["id"]
-                log_entry = {
-                    "member_id": member_id,
-                    "stage": initial_stage,
-                    "notes": notes.strip() if notes else "Guest registered"
-                }
-                supabase.table("prospect_logs").insert(log_entry).execute()
+            if not res.data:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Failed to create guest record in database."
+                )
+
+            member_id = res.data[0]["id"]
+
+            # 3. Insert initial stage entry into prospect_logs
+            log_entry = {
+                "member_id": member_id,
+                "stage": initial_stage,
+                "notes": notes.strip() if notes else "Guest registered"
+            }
+            supabase.table("prospect_logs").insert(log_entry).execute()
+
+        except HTTPException:
+            raise
         except Exception as e:
             print(f"Error inserting new prospect: {e}")
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Failed to register guest: {str(e)}"
+            )
 
     prospects = fetch_prospects_data(stage_filter="all")
     context = {
@@ -153,7 +186,7 @@ async def add_prospect(
         "stages": STAGES,
         "active_stage": "all",
         "active_page": "guests",
-        "success_message": f"Guest '{full_name.strip()}' registered successfully."
+        "success_message": f"Guest '{cleaned_name}' registered successfully."
     }
     return templates.TemplateResponse(request, "partials/prospects.html", context)
 
@@ -197,8 +230,14 @@ async def update_prospect_stage(
                     "status": "Prospect"
                 }).eq("id", prospect_id).execute()
 
+        except HTTPException:
+            raise
         except Exception as e:
             print(f"Error updating prospect stage: {e}")
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Failed to update pipeline stage: {str(e)}"
+            )
 
     prospects = fetch_prospects_data(stage_filter="all")
     context = {
@@ -288,11 +327,24 @@ async def update_prospect(
     """
     Updates an existing guest's contact details (name, email, phone).
     """
+    cleaned_email = email.strip().lower()
+    cleaned_name = full_name.strip()
+
     if supabase:
         try:
+            # Check for duplicate email across other members & prospects
+            existing = supabase.table("members").select("id, full_name, status").ilike("email", cleaned_email).neq("id", prospect_id).execute()
+            if existing.data:
+                existing_record = existing.data[0]
+                record_type = "member" if existing_record.get("status") == "Active" else "guest"
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=f"Cannot update: Email '{cleaned_email}' is already in use by {record_type} '{existing_record.get('full_name')}'."
+                )
+
             update_payload = {
-                "full_name": full_name.strip(),
-                "email": email.strip().lower(),
+                "full_name": cleaned_name,
+                "email": cleaned_email,
                 "phone": phone.strip() if phone else None
             }
             res = supabase.table("members").update(update_payload).eq("id", prospect_id).execute()

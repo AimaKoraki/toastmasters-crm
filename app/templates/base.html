@@ -255,33 +255,42 @@
         });
 
         // ── Global Toast Notification System ───────────────────────────
-        function showToast(message, type = 'success', duration = 4000) {
+        function showToast(message, type = 'success', duration = 4500) {
             const container = document.getElementById('toast-container');
             if (!container) return;
 
             const toast = document.createElement('div');
-            toast.className = 'toast-slide-in pointer-events-auto flex items-start gap-3 p-4 rounded-xl border shadow-xl transition-all duration-300 ' +
-                (type === 'success' ? 'bg-white border-emerald-200 text-slate-800' :
-                 type === 'error'   ? 'bg-white border-rose-200 text-slate-800' :
-                 type === 'warning' ? 'bg-white border-amber-200 text-slate-800' :
-                                      'bg-white border-blue-200 text-slate-800');
+            toast.className = 'toast-slide-in pointer-events-auto flex items-start gap-3.5 p-4 rounded-xl border shadow-2xl transition-all duration-300 ' +
+                (type === 'success' ? 'bg-emerald-50 border-emerald-300 text-emerald-950 ring-1 ring-emerald-200' :
+                 type === 'error'   ? 'bg-rose-50 border-rose-300 text-rose-950 ring-1 ring-rose-200' :
+                 type === 'warning' ? 'bg-amber-50 border-amber-300 text-amber-950 ring-1 ring-amber-200' :
+                                      'bg-blue-50 border-blue-300 text-blue-950 ring-1 ring-blue-200');
 
             const iconName = type === 'success' ? 'check-circle-2' :
-                             type === 'error'   ? 'alert-circle' :
+                             type === 'error'   ? 'alert-octagon' :
                              type === 'warning' ? 'alert-triangle' : 'info';
 
             const iconColor = type === 'success' ? 'text-emerald-600' :
                               type === 'error'   ? 'text-rose-600' :
                               type === 'warning' ? 'text-amber-600' : 'text-blue-600';
 
+            const titleText = type === 'success' ? 'Success' :
+                              type === 'error'   ? 'Action Failed' :
+                              type === 'warning' ? 'Warning' : 'Information';
+
+            const titleColor = type === 'success' ? 'text-emerald-800' :
+                               type === 'error'   ? 'text-rose-800' :
+                               type === 'warning' ? 'text-amber-800' : 'text-blue-800';
+
             toast.innerHTML = `
                 <div class="shrink-0 mt-0.5 ${iconColor}">
                     <i data-lucide="${iconName}" class="w-5 h-5"></i>
                 </div>
-                <div class="flex-1 text-sm font-medium leading-5">
-                    ${message}
+                <div class="flex-1 text-sm leading-snug">
+                    <div class="font-bold text-xs uppercase tracking-wider ${titleColor} mb-0.5">${titleText}</div>
+                    <div class="font-medium text-slate-800">${message}</div>
                 </div>
-                <button type="button" class="shrink-0 text-slate-400 hover:text-slate-600 ml-1 p-0.5" onclick="dismissToast(this.parentElement)">
+                <button type="button" class="shrink-0 text-slate-400 hover:text-slate-700 ml-1 p-0.5 transition" onclick="dismissToast(this.parentElement)">
                     <i data-lucide="x" class="w-4 h-4"></i>
                 </button>
             `;
@@ -539,10 +548,10 @@
             const rows = document.querySelectorAll('#dashboard-guest-table tbody tr');
             const clearBtn = document.getElementById('dashboard-guest-search-clear');
             if (clearBtn) clearBtn.classList.toggle('hidden', !query);
-            const q = query.toLowerCase();
+            const q = query.toLowerCase().trim();
             rows.forEach(row => {
-                const name = row.querySelector('.guest-name')?.textContent.toLowerCase() || '';
-                row.style.display = name.includes(q) ? '' : 'none';
+                const text = row.textContent.toLowerCase();
+                row.style.display = text.includes(q) ? '' : 'none';
             });
         }
 

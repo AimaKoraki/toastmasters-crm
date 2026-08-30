@@ -89,14 +89,28 @@ async def create_meeting(
 ):
     if supabase:
         try:
+            # Check duplicate meeting number
+            existing = supabase.table("meetings").select("id").eq("meeting_number", meeting_number).execute()
+            if existing.data:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=f"Meeting #{meeting_number} is already scheduled."
+                )
+
             new_meeting = {
                 "meeting_number": meeting_number,
                 "meeting_date": meeting_date,
                 "theme": theme.strip() if theme else None
             }
             supabase.table("meetings").insert(new_meeting).execute()
+        except HTTPException:
+            raise
         except Exception as e:
             print(f"Error creating meeting: {e}")
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Failed to schedule meeting: {str(e)}"
+            )
 
     meetings = fetch_meetings_with_stats()
     context = {
@@ -254,43 +268,76 @@ async def save_batch_attendance(request: Request, user=Depends(get_current_user)
 async def get_live_meeting_console(request: Request, meeting_id: int = None, user=Depends(get_current_user)):
     """
     Renders the Live Meeting Console for meeting day operations.
-    Loads active meeting, assigned roles & speeches, and live attendance metrics.
+    Loads active meeting, assigned roles & speeches, all meetings for switching, and live attendance metrics.
     """
     meeting = None
+    all_meetings = []
     assigned_roles = []
+    meeting_guests = []
     attendance_stats = {"present": 0, "absent": 0, "excused": 0, "guest": 0, "total": 0}
 
     if supabase:
         try:
-            # 1. Fetch meeting
+            # 1. Fetch all meetings for dropdown switcher
+            m_res = supabase.table("meetings").select("*").order("meeting_date", desc=True).order("meeting_number", desc=True).execute()
+            all_meetings = m_res.data or []
+
+            # 2. Select target meeting
             if meeting_id:
-                m_res = supabase.table("meetings").select("*").eq("id", meeting_id).execute()
-            else:
-                m_res = supabase.table("meetings").select("*").order("meeting_date", desc=True).limit(1).execute()
-            
-            if m_res.data:
-                meeting = m_res.data[0]
+                for m in all_meetings:
+                    if m["id"] == meeting_id:
+                        meeting = m
+                        break
+                if not meeting:
+                    m_single = supabase.table("meetings").select("*").eq("id", meeting_id).execute()
+                    if m_single.data:
+                        meeting = m_single.data[0]
+            elif all_meetings:
+                meeting = all_meetings[0]
+
+            if meeting:
                 mid = meeting["id"]
 
-                # 2. Fetch assigned roles
+                # 3. Fetch assigned roles
                 roles_res = supabase.table("role_assignments").select(
                     "id, speech_title, role_catalog(role_name, category), members(id, full_name, email, status)"
                 ).eq("meeting_id", mid).execute()
                 assigned_roles = roles_res.data or []
 
-                # 3. Fetch attendance stats
-                att_res = supabase.table("attendance").select("status").eq("meeting_id", mid).execute()
-                for a in (att_res.data or []):
+                # 4. Fetch attendance records joined with member status
+                att_res = supabase.table("attendance").select(
+                    "status, member_id, members(id, full_name, status)"
+                ).eq("meeting_id", mid).execute()
+                all_att = att_res.data or []
+
+                # 5. Fetch registered prospects/guests in the club
+                guests_res = supabase.table("members").select("id, full_name, email, phone").eq("status", "Prospect").order("created_at", desc=True).execute()
+                all_prospects = guests_res.data or []
+
+                # Compute attendance breakdown
+                for a in all_att:
                     st = a.get("status")
-                    if st == "Present":
-                        attendance_stats["present"] += 1
-                    elif st == "Absent":
-                        attendance_stats["absent"] += 1
-                    elif st == "Excused":
-                        attendance_stats["excused"] += 1
-                    elif st == "Guest":
-                        attendance_stats["guest"] += 1
+                    mem = a.get("members") or {}
+                    is_prospect = mem.get("status") == "Prospect"
+
+                    if is_prospect:
+                        if st == "Present" or st == "Guest":
+                            attendance_stats["guest"] += 1
+                    else:
+                        if st == "Present":
+                            attendance_stats["present"] += 1
+                        elif st == "Absent":
+                            attendance_stats["absent"] += 1
+                        elif st == "Excused":
+                            attendance_stats["excused"] += 1
+
                     attendance_stats["total"] += 1
+
+                # If no meeting-specific attendance has been logged yet, show total registered club guests
+                if attendance_stats["guest"] == 0:
+                    attendance_stats["guest"] = len(all_prospects)
+
+                meeting_guests = all_prospects
 
         except Exception as e:
             print(f"Error fetching live meeting console: {e}")
@@ -298,7 +345,9 @@ async def get_live_meeting_console(request: Request, meeting_id: int = None, use
     context = {
         "request": request,
         "meeting": meeting,
+        "all_meetings": all_meetings,
         "assigned_roles": assigned_roles,
+        "meeting_guests": meeting_guests,
         "attendance_stats": attendance_stats,
         "active_page": "agenda"
     }

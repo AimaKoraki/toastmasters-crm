@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Request, Form, Depends, HTTPException, status
+from fastapi import APIRouter, Request, Form, Depends, HTTPException, status as http_status
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from app.config import supabase
@@ -140,6 +140,7 @@ async def get_new_member_modal(request: Request, user=Depends(get_current_user))
 
 
 @router.post("", response_class=HTMLResponse)
+@router.post("/", response_class=HTMLResponse)
 async def create_member(
     request: Request,
     full_name: str = Form(...),
@@ -157,19 +158,24 @@ async def create_member(
     if pathway_level not in PATHWAY_LEVELS:
         pathway_level = "Level 1"
 
+    cleaned_email = email.strip().lower()
+    cleaned_name = full_name.strip()
+
     if supabase:
         try:
-            # Check for existing email to avoid silent or unhandled DB constraint errors
-            existing = supabase.table("members").select("id").eq("email", email.strip().lower()).execute()
+            # Check for existing email to avoid silent or unhandled DB constraint errors (case-insensitive)
+            existing = supabase.table("members").select("id, full_name, status").ilike("email", cleaned_email).execute()
             if existing.data:
+                existing_record = existing.data[0]
+                record_type = "member" if existing_record.get("status") == "Active" else "guest"
                 raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail=f"A member or prospect with email '{email.strip()}' already exists."
+                    status_code=http_status.HTTP_400_BAD_REQUEST,
+                    detail=f"A {record_type} with email '{cleaned_email}' already exists ({existing_record.get('full_name')})."
                 )
 
             new_member_payload = {
-                "full_name": full_name.strip(),
-                "email": email.strip().lower(),
+                "full_name": cleaned_name,
+                "email": cleaned_email,
                 "phone": phone.strip() if phone else None,
                 "status": status,
                 "pathway_level": pathway_level
@@ -180,7 +186,7 @@ async def create_member(
         except Exception as e:
             print(f"Error creating member: {e}")
             raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
+                status_code=http_status.HTTP_400_BAD_REQUEST,
                 detail=f"Failed to create member: {str(e)}"
             )
 
@@ -228,7 +234,7 @@ async def get_edit_member_modal(
 
     if not member:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
+            status_code=http_status.HTTP_404_NOT_FOUND,
             detail=f"Member with ID #{member_id} not found."
         )
 
@@ -260,11 +266,24 @@ async def update_member(
     if pathway_level not in PATHWAY_LEVELS:
         pathway_level = "Level 1"
 
+    cleaned_email = email.strip().lower()
+    cleaned_name = full_name.strip()
+
     if supabase:
         try:
+            # Check for duplicate email across other members & prospects
+            existing = supabase.table("members").select("id, full_name, status").ilike("email", cleaned_email).neq("id", member_id).execute()
+            if existing.data:
+                existing_record = existing.data[0]
+                record_type = "member" if existing_record.get("status") == "Active" else "guest"
+                raise HTTPException(
+                    status_code=http_status.HTTP_400_BAD_REQUEST,
+                    detail=f"Cannot update: Email '{cleaned_email}' is already in use by {record_type} '{existing_record.get('full_name')}'."
+                )
+
             update_payload = {
-                "full_name": full_name.strip(),
-                "email": email.strip().lower(),
+                "full_name": cleaned_name,
+                "email": cleaned_email,
                 "phone": phone.strip() if phone else None,
                 "status": status,
                 "pathway_level": pathway_level
@@ -272,7 +291,7 @@ async def update_member(
             res = supabase.table("members").update(update_payload).eq("id", member_id).execute()
             if not res.data:
                 raise HTTPException(
-                    status_code=status.HTTP_404_NOT_FOUND,
+                    status_code=http_status.HTTP_404_NOT_FOUND,
                     detail=f"Member #{member_id} not found to update."
                 )
         except HTTPException:
@@ -280,7 +299,7 @@ async def update_member(
         except Exception as e:
             print(f"Error updating member #{member_id}: {e}")
             raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
+                status_code=http_status.HTTP_400_BAD_REQUEST,
                 detail=f"Failed to update member: {str(e)}"
             )
 

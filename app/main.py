@@ -144,9 +144,9 @@ def read_root(request: Request, user=Depends(get_current_user)):
         except Exception:
             pass
             
-        # 4. Guest Pipeline Table Data
+        # 4. Guest Pipeline Table Data (sorted most recent first)
         try:
-            prospects_res = supabase.table("members").select("*").eq("status", "Prospect").execute()
+            prospects_res = supabase.table("members").select("*").eq("status", "Prospect").order("created_at", desc=True).execute()
             for p in prospects_res.data:
                 stage = latest_stages.get(p["id"], "1st Visit")
                 if stage != 'Onboarded':

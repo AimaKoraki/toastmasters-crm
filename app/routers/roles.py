@@ -142,31 +142,65 @@ async def get_assign_role_modal(request: Request, user=Depends(get_current_user)
 @router.post("", response_class=HTMLResponse)
 async def assign_role(
     request: Request,
-    meeting_id: int = Form(...),
-    member_id: int = Form(...),
-    role_id: int = Form(...),
-    speech_title: str = Form(""),
     user=Depends(get_current_user)
 ):
     """
-    Assigns a role to a member for a given meeting.
-    Supports single or multi-role entries.
+    Assigns one or more roles to a member for a given meeting.
+    Accepts multiple role_ids from checkboxes.
+    Returns granular success/warning based on duplicates detected.
     """
-    if supabase:
+    form = await request.form()
+    meeting_id = int(form.get("meeting_id", 0))
+    member_id = int(form.get("member_id", 0))
+    role_ids = [int(v) for v in form.getlist("role_ids") if v]
+    speech_title = form.get("speech_title", "").strip() or None
+
+    added_roles = []
+    skipped_roles = []
+    success_message = None
+    warning_message = None
+
+    if supabase and role_ids:
         try:
-            new_assignment = {
-                "meeting_id": meeting_id,
-                "member_id": member_id,
-                "role_id": role_id,
-                "speech_title": speech_title.strip() if speech_title else None
-            }
-            # Upsert/Insert into role_assignments
-            supabase.table("role_assignments").upsert(
-                new_assignment,
-                on_conflict="meeting_id,member_id,role_id"
-            ).execute()
+            # Fetch role names for feedback messages
+            cat_res = supabase.table("role_catalog").select("id, role_name").execute()
+            role_name_map = {r["id"]: r["role_name"] for r in (cat_res.data or [])}
+
+            for rid in role_ids:
+                # Check for existing duplicate
+                existing = supabase.table("role_assignments").select("id").eq(
+                    "meeting_id", meeting_id
+                ).eq("member_id", member_id).eq("role_id", rid).execute()
+
+                if existing.data:
+                    skipped_roles.append(role_name_map.get(rid, f"Role #{rid}"))
+                else:
+                    supabase.table("role_assignments").insert({
+                        "meeting_id": meeting_id,
+                        "member_id": member_id,
+                        "role_id": rid,
+                        "speech_title": speech_title
+                    }).execute()
+                    added_roles.append(role_name_map.get(rid, f"Role #{rid}"))
+
+        except HTTPException:
+            raise
         except Exception as e:
-            print(f"Error assigning role: {e}")
+            print(f"Error assigning role(s): {e}")
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Failed to assign role(s): {str(e)}"
+            )
+
+    if added_roles and skipped_roles:
+        success_message = f"{len(added_roles)} role(s) assigned: {', '.join(added_roles)}."
+        warning_message = f"{len(skipped_roles)} already assigned & skipped: {', '.join(skipped_roles)}."
+    elif added_roles:
+        success_message = f"{len(added_roles)} role(s) successfully assigned: {', '.join(added_roles)}."
+    elif skipped_roles:
+        warning_message = f"All selected role(s) already assigned — nothing new added: {', '.join(skipped_roles)}."
+    elif not role_ids:
+        warning_message = "No roles were selected. Please check at least one role."
 
     roles, matrix, all_members, all_meetings, all_roles = fetch_roles_matrix(category_filter="all")
     context = {
@@ -177,7 +211,8 @@ async def assign_role(
         "all_meetings": all_meetings,
         "all_roles": all_roles,
         "active_category": "all",
-        "success_message": "Role assignment successfully recorded.",
+        "success_message": success_message,
+        "warning_message": warning_message,
         "active_page": "role_matrix"
     }
     return templates.TemplateResponse(request, "partials/roles.html", context)
