@@ -3,7 +3,7 @@
 
 ---
 
-### Project Status Overview
+#### Project Status Overview
 
 | Phase / Milestone | Status | Completion % |
 |---|---|---|
@@ -12,7 +12,7 @@
 | **Phase 3: Guest & Prospect Pipeline** | ✅ Complete | 100% |
 | **Phase 4: Meeting & Attendance Tracking** | ✅ Complete | 100% |
 | **Phase 5: Role Assignments & Matrix** | ✅ Complete | 100% |
-| **Phase 6: Member Management Module** | ⏳ Pending | 0% |
+| **Phase 6: Member Management Module** | ✅ Complete | 100% |
 | **Phase 7: Reports & Exports** | ✅ Complete | 100% |
 
 ---
@@ -58,6 +58,7 @@
   - [x] `POST /prospects/{id}/stage`: Validates and transitions prospect stage (`1st Visit` → `2nd Visit` → `Form Sent` → `Payment Pending` → `Onboarded`)
   - [x] Automatic Onboarding logic: Upgrades member `status = 'Active'` when transition to `Onboarded` occurs
   - [x] `GET /prospects/{id}/history`: Returns stage history timeline modal (`app/templates/partials/prospect_history_modal.html`)
+  - [x] `GET /prospects/{id}/edit` & `POST /prospects/{id}`: Renders and processes guest contact detail updates (`app/templates/partials/prospect_edit_modal.html`)
   - [x] Stage badges color-coded (Sky Blue, Blue, Indigo, Amber, Emerald)
   - [x] Inline fast-track advance button + modal stage selector with progress notes
 
@@ -65,9 +66,9 @@
   - [x] `GET /meetings`: Renders meetings list partial with attendance summary counts (`app/templates/partials/meetings.html`)
   - [x] `GET /meetings/new`: Renders standalone Add Meeting modal (`app/templates/partials/meeting_modal.html`)
   - [x] `POST /meetings`: Creates new meeting record (`meeting_number`, `meeting_date`, `theme`)
-  - [x] `GET /meetings/{meeting_id}/attendance`: Renders interactive batch check-in matrix (`app/templates/partials/attendance.html`)
+  - [x] `GET /meetings/{meeting_id}/attendance`: Renders interactive batch check-in matrix separated into Club Members Roster & Guests Roster (`app/templates/partials/attendance.html`)
   - [x] `GET /meetings/attendance`: Quick action helper auto-selecting latest meeting
-  - [x] `POST /attendance`: Batch upsert/save attendance records (`Present`, `Absent`, `Excused`, `Guest`)
+  - [x] `POST /attendance`: Batch upsert/save attendance records (`Present`, `Absent`, `Excused`)
   - [x] Segmented radio buttons per member row with bulk actions ("All Present", "All Absent", "All Excused")
   - [x] Live roster search filtering
 
@@ -90,21 +91,19 @@
   - [x] `app/routers/reports.py` registered in `main.py`
   - [x] `GET /reports`: Renders full analytics dashboard (`app/templates/partials/reports.html`)
   - [x] `GET /reports/export`: Renders export modal (`app/templates/partials/export_modal.html`)
-  - [x] `GET /reports/download`: Streaming CSV export for:
-    - [x] Meeting attendance logs
-    - [x] Guest & prospect pipeline conversion data
-    - [x] Member role participation history
-    - [x] Overall club KPI summary
+  - [x] `GET /reports/download`: Streaming CSV export for meeting attendance, guests, roles, and KPI summary
   - [x] Sidebar `Reports` nav link wired via HTMX
 
-- [ ] **Step 11: Dedicated Member Management Module**
-  - [ ] `app/routers/members.py` (`GET /members`, `POST /members`, `GET /members/{id}`)
-  - [ ] Member directory partial (`app/templates/partials/members.html`) with status filters (`Active`, `Inactive`, `Alumni`)
-  - [ ] Semi-annual renewal cycle tracker (March / September)
-  - [ ] Pathways level management and progress tracking
+- [x] **Step 11: Dedicated Member Management Module (Module C)**
+  - [x] `app/routers/members.py` (`GET /members`, `GET /members/new`, `POST /members`, `GET /members/{id}/edit`, `POST /members/{id}`)
+  - [x] Member directory partial (`app/templates/partials/members.html`) with status filters (`Active`, `Inactive`, `Alumni`), search, and sorting
+  - [x] Semi-annual renewal cycle tracker (March / September urgency badges)
+  - [x] Pathways level management (`Level 1` through `Level 5`, `DTM`)
+  - [x] Standalone Add Member (`member_modal.html`) and Edit Member (`member_edit_modal.html`) modals
 
 ---
 
-### Immediate Next Tasks (Priority Order)
+### Future Enhancements & Submodules
 
-1. **Implement Dedicated Member Management Module (Module C):** Add `app/routers/members.py` and `app/templates/partials/members.html` with status filtering (`Active`, `Inactive`, `Alumni`), renewal cycle tracking, and member profile view.
+1. **Follow-up & Outreach Queue:** Build automated follow-up queues for guests who haven't converted after 2 visits or members missing recent meetings.
+2. **Pathways Deep Integration:** Track project completion within each Pathways level. cycle tracking, and member profile view.

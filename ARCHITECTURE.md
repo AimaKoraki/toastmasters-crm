@@ -145,13 +145,15 @@ Browser                     FastAPI (main.py)               Supabase
 | `POST` | `/prospects/{id}/stage` | ✅ Complete | Progress prospect stage, append notes, auto-onboard to `Active` |
 | `GET` | `/prospects/{id}/history` | ✅ Complete | Render stage timeline history modal partial |
 | `GET` | `/prospects/new` | ✅ Complete | Render add-guest modal partial (for quick actions) |
+| `GET` | `/prospects/{id}/edit` | ✅ Complete | Render edit guest contact details modal partial |
+| `POST` | `/prospects/{id}` | ✅ Complete | Update guest contact details (name, email, phone) |
 
 #### `meetings.py`
 | Method | Path | Status | Description |
 |---|---|---|---|
 | `GET` | `/meetings` | ✅ Complete | Render meetings list partial with attendance stats |
 | `POST` | `/meetings` | ✅ Complete | Create new meeting record |
-| `GET` | `/meetings/{id}/attendance` | ✅ Complete | Render batch attendance check-in matrix view |
+| `GET` | `/meetings/{id}/attendance` | ✅ Complete | Render separated batch attendance check-in sheet (Members & Guests) |
 | `GET` | `/meetings/attendance` | ✅ Complete | Quick action helper for latest meeting attendance |
 | `GET` | `/meetings/new` | ✅ Complete | Render standalone Add Meeting modal partial |
 | `GET` | `/meetings/live` | ✅ Complete | Render Live Meeting Mode console partial |
@@ -228,27 +230,22 @@ Browser                     FastAPI (main.py)               Supabase
 
 ### 10. Technical Gap Analysis & Audit Findings
 
-During the codebase audit, the following technical gaps were documented:
+During earlier codebase audits, initial technical gaps were identified and have since been **100% resolved and verified**:
 
 1. **Dashboard Quick Action Handlers:**
-   - The Quick Action buttons on `index.html` use `hx-get` targeting `/prospects/new`, `/meetings/attendance`, `/roles/assign`, `/meetings/live`, and `/reports/export`. These routes either do not exist or expect `POST` methods.
-   - *Action:* Create lightweight modal endpoints or unify them with a global modal trigger.
+   - *Status:* [✅ Resolved] All 5 quick action buttons on `index.html` (`/prospects/new`, `/meetings/attendance`, `/roles/assign`, `/meetings/live`, `/reports/export`) are fully wired and functional.
 
-2. **Prospect Stage Workflow:**
-   - The UI displays pipeline stages (`1st Visit`, `2nd Visit`, `Form Sent`, `Payment Pending`, `Onboarded`), but there is no handler in `prospects.py` to transition an existing prospect between stages.
-   - *Action:* Implement `POST /prospects/{id}/stage` and wire status-click actions.
+2. **Prospect Stage Workflow & Guest Profile Editing:**
+   - *Status:* [✅ Resolved] `POST /prospects/{id}/stage` handles pipeline stage progression with automatic member onboarding, and `GET /prospects/{id}/edit` / `POST /prospects/{id}` allow editing guest contact details.
 
 3. **Attendance Logging Implementation:**
-   - `meetings.py` creates meetings, but attendance recording (`POST /attendance`) and the check-in matrix view are unimplemented.
-   - *Action:* Implement batch attendance submission and interactive checkbox check-in view.
+   - *Status:* [✅ Resolved] `POST /attendance` supports batch attendance logging, separated by **Club Members Roster** and **Meeting Guests Roster** with `Present`, `Absent`, and `Excused` statuses.
 
 4. **Dynamic Role Frequency Matrix:**
-   - `roles.py` returns `matrix: []`. The UI shows a table shell with "No role history found".
-   - *Action:* Write aggregation query to compute `(member_name, role_name) -> count` across meetings.
+   - *Status:* [✅ Resolved] `roles.py` computes cross-tabulation matrix of member role assignments across meetings with role category filtering (`All`, `Major`, `Functional`).
 
 5. **Session Secret Environment Binding:**
-   - `main.py` uses hardcoded `secret_key="super-secret-exco-key"` instead of `os.getenv("SESSION_SECRET")`.
-   - *Action:* Bind `SESSION_SECRET` from `.env` with a secure fallback.
+   - *Status:* [✅ Resolved] `main.py` binds `SESSION_SECRET` dynamically from `.env` with secure fallback.
 
 ---
 
