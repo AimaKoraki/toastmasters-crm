@@ -1,0 +1,290 @@
+<!-- Toast Trigger for dynamic HTMX responses -->
+{% if success_message %}
+<div class="toast-trigger hidden" data-toast-message="{{ success_message }}" data-toast-type="success"></div>
+{% endif %}
+{% if error_message %}
+<div class="toast-trigger hidden" data-toast-message="{{ error_message }}" data-toast-type="error"></div>
+{% endif %}
+
+<div class="p-6 max-w-7xl mx-auto space-y-6">
+
+    <!-- Top Header -->
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+            <div class="flex items-center gap-2 text-xs font-semibold text-blue-600 tracking-wider uppercase mb-1">
+                <i data-lucide="shield-check" class="w-4 h-4"></i>
+                Access Control &amp; Security
+            </div>
+            <h2 class="text-2xl font-bold text-slate-900 tracking-tight">User Accounts &amp; Logins</h2>
+            <p class="text-sm text-slate-500 mt-0.5">Manage Exco officer credentials, roles, and administrative privileges.</p>
+        </div>
+        <div class="flex items-center gap-3">
+            <button
+                hx-get="/users/new"
+                hx-target="#modal-container"
+                class="btn-primary inline-flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold shadow-sm hover:shadow transition-all"
+            >
+                <i data-lucide="user-plus" class="w-4 h-4"></i>
+                Add User Account
+            </button>
+        </div>
+    </div>
+
+    <!-- KPI Summary Strip -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div class="card p-4 flex items-center gap-4 bg-white border border-slate-200/80 rounded-xl shadow-xs">
+            <div class="w-10 h-10 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
+                <i data-lucide="users" class="w-5 h-5"></i>
+            </div>
+            <div>
+                <p class="text-xs font-medium text-slate-500 uppercase tracking-wider">Total Accounts</p>
+                <p class="text-2xl font-bold text-slate-900 mt-0.5">{{ stats.total }}</p>
+            </div>
+        </div>
+        <div class="card p-4 flex items-center gap-4 bg-white border border-slate-200/80 rounded-xl shadow-xs">
+            <div class="w-10 h-10 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center shrink-0">
+                <i data-lucide="shield-alert" class="w-5 h-5"></i>
+            </div>
+            <div>
+                <p class="text-xs font-medium text-slate-500 uppercase tracking-wider">Administrators</p>
+                <p class="text-2xl font-bold text-slate-900 mt-0.5">{{ stats.admins }}</p>
+            </div>
+        </div>
+        <div class="card p-4 flex items-center gap-4 bg-white border border-slate-200/80 rounded-xl shadow-xs">
+            <div class="w-10 h-10 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
+                <i data-lucide="badge-check" class="w-5 h-5"></i>
+            </div>
+            <div>
+                <p class="text-xs font-medium text-slate-500 uppercase tracking-wider">Active Exco</p>
+                <p class="text-2xl font-bold text-slate-900 mt-0.5">{{ stats.exco }}</p>
+            </div>
+        </div>
+        <div class="card p-4 flex items-center gap-4 bg-white border border-slate-200/80 rounded-xl shadow-xs">
+            <div class="w-10 h-10 rounded-lg bg-rose-50 text-rose-600 flex items-center justify-center shrink-0">
+                <i data-lucide="user-x" class="w-5 h-5"></i>
+            </div>
+            <div>
+                <p class="text-xs font-medium text-slate-500 uppercase tracking-wider">Deactivated</p>
+                <p class="text-2xl font-bold text-slate-900 mt-0.5">{{ stats.inactive }}</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters & Search Toolbar -->
+    <div class="card bg-white border border-slate-200/80 rounded-xl p-4 shadow-xs flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-3">
+        <!-- Role Filter Tabs -->
+        <div class="flex items-center gap-1.5 bg-slate-100 p-1 rounded-lg self-start sm:self-auto text-xs font-medium">
+            <a
+                href="#"
+                hx-get="/users?role=all"
+                hx-target="#main-content"
+                class="px-3 py-1.5 rounded-md transition-all {% if active_role == 'all' %}bg-white text-slate-900 font-semibold shadow-xs{% else %}text-slate-600 hover:text-slate-900{% endif %}"
+            >
+                All Roles
+            </a>
+            <a
+                href="#"
+                hx-get="/users?role=Admin"
+                hx-target="#main-content"
+                class="px-3 py-1.5 rounded-md transition-all {% if active_role == 'Admin' %}bg-white text-purple-700 font-semibold shadow-xs{% else %}text-slate-600 hover:text-slate-900{% endif %}"
+            >
+                Admins
+            </a>
+            <a
+                href="#"
+                hx-get="/users?role=Exco"
+                hx-target="#main-content"
+                class="px-3 py-1.5 rounded-md transition-all {% if active_role == 'Exco' %}bg-white text-blue-700 font-semibold shadow-xs{% else %}text-slate-600 hover:text-slate-900{% endif %}"
+            >
+                Exco Officers
+            </a>
+            <a
+                href="#"
+                hx-get="/users?role=Viewer"
+                hx-target="#main-content"
+                class="px-3 py-1.5 rounded-md transition-all {% if active_role == 'Viewer' %}bg-white text-slate-700 font-semibold shadow-xs{% else %}text-slate-600 hover:text-slate-900{% endif %}"
+            >
+                Viewers
+            </a>
+        </div>
+
+        <!-- Search Input -->
+        <div class="relative w-full sm:w-72">
+            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+                <i data-lucide="search" class="w-4 h-4"></i>
+            </div>
+            <input
+                type="text"
+                name="q"
+                value="{{ search_query or '' }}"
+                placeholder="Search by name, email, or username..."
+                hx-get="/users?role={{ active_role }}"
+                hx-trigger="keyup changed delay:300ms, search"
+                hx-target="#main-content"
+                class="w-full pl-9 pr-4 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-800 placeholder-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition"
+            >
+        </div>
+    </div>
+
+    <!-- Users Table -->
+    <div class="card bg-white border border-slate-200/80 rounded-xl shadow-xs overflow-hidden">
+        {% if users and users|length > 0 %}
+        <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="bg-slate-50/75 border-b border-slate-200/80 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
+                        <th class="py-3 px-4">User</th>
+                        <th class="py-3 px-4">Email</th>
+                        <th class="py-3 px-4">Linked Member</th>
+                        <th class="py-3 px-4">Role</th>
+                        <th class="py-3 px-4">Status</th>
+                        <th class="py-3 px-4">Last Login</th>
+                        <th class="py-3 px-4 text-right">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 text-sm">
+                    {% for u in users %}
+                    <tr class="hover:bg-slate-50/60 transition-colors">
+                        <!-- User (Avatar + Name + Username) -->
+                        <td class="py-3.5 px-4">
+                            <div class="flex items-center gap-3">
+                                <div class="w-9 h-9 rounded-full {% if u.role == 'Admin' %}bg-purple-100 text-purple-700{% elif u.role == 'Exco' %}bg-blue-100 text-blue-700{% else %}bg-slate-100 text-slate-600{% endif %} flex items-center justify-center font-bold text-xs shrink-0">
+                                    {{ u.full_name[:2].upper() if u.full_name else u.username[:2].upper() }}
+                                </div>
+                                <div>
+                                    <div class="font-semibold text-slate-900 flex items-center gap-1.5">
+                                        {{ u.full_name }}
+                                        {% if current_user and current_user.id == u.id %}
+                                        <span class="text-[10px] font-medium bg-blue-50 text-blue-700 border border-blue-200 px-1.5 py-0.2 rounded">You</span>
+                                        {% endif %}
+                                    </div>
+                                    <div class="text-xs text-slate-400 font-mono">@{{ u.username }}</div>
+                                </div>
+                            </div>
+                        </td>
+
+                        <!-- Email -->
+                        <td class="py-3.5 px-4 text-slate-600 text-xs">
+                            {{ u.email }}
+                        </td>
+
+                        <!-- Linked Member -->
+                        <td class="py-3.5 px-4 text-xs">
+                            {% if u.members and u.members.full_name %}
+                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 border border-slate-200 font-medium">
+                                <i data-lucide="user" class="w-3 h-3 text-slate-400"></i>
+                                {{ u.members.full_name }}
+                            </span>
+                            {% else %}
+                            <span class="text-slate-400 italic">None</span>
+                            {% endif %}
+                        </td>
+
+                        <!-- Role -->
+                        <td class="py-3.5 px-4 text-xs">
+                            {% if u.role == 'Admin' %}
+                            <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-purple-50 text-purple-700 border border-purple-200">
+                                <i data-lucide="shield" class="w-3 h-3"></i>
+                                Admin
+                            </span>
+                            {% elif u.role == 'Exco' %}
+                            <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200">
+                                <i data-lucide="shield-check" class="w-3 h-3"></i>
+                                Exco
+                            </span>
+                            {% else %}
+                            <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-600 border border-slate-200">
+                                <i data-lucide="eye" class="w-3 h-3"></i>
+                                Viewer
+                            </span>
+                            {% endif %}
+                        </td>
+
+                        <!-- Status -->
+                        <td class="py-3.5 px-4 text-xs">
+                            {% if u.is_active %}
+                            <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                                Active
+                            </span>
+                            {% else %}
+                            <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium bg-rose-50 text-rose-700 border border-rose-200">
+                                <span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
+                                Inactive
+                            </span>
+                            {% endif %}
+                        </td>
+
+                        <!-- Last Login -->
+                        <td class="py-3.5 px-4 text-xs text-slate-500">
+                            {% if u.last_login %}
+                            <span title="{{ u.last_login }}">{{ u.last_login[:16].replace('T', ' ') }}</span>
+                            {% else %}
+                            <span class="text-slate-400 italic">Never</span>
+                            {% endif %}
+                            {% if u.must_change_password %}
+                            <div class="text-[10px] text-amber-600 font-medium">Must reset password</div>
+                            {% endif %}
+                        </td>
+
+                        <!-- Actions -->
+                        <td class="py-3.5 px-4 text-right">
+                            <div class="inline-flex items-center gap-1">
+                                <button
+                                    title="Edit Profile &amp; Role"
+                                    hx-get="/users/{{ u.id }}/edit"
+                                    hx-target="#modal-container"
+                                    class="p-1.5 rounded-lg text-slate-500 hover:text-blue-600 hover:bg-blue-50 transition"
+                                >
+                                    <i data-lucide="pencil" class="w-4 h-4"></i>
+                                </button>
+                                <button
+                                    title="Reset Password"
+                                    hx-get="/users/{{ u.id }}/reset-password"
+                                    hx-target="#modal-container"
+                                    class="p-1.5 rounded-lg text-slate-500 hover:text-amber-600 hover:bg-amber-50 transition"
+                                >
+                                    <i data-lucide="key" class="w-4 h-4"></i>
+                                </button>
+                                <button
+                                    title="Delete Account"
+                                    hx-get="/users/{{ u.id }}/delete-confirm"
+                                    hx-target="#modal-container"
+                                    class="p-1.5 rounded-lg text-slate-500 hover:text-rose-600 hover:bg-rose-50 transition"
+                                >
+                                    <i data-lucide="trash-2" class="w-4 h-4"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <!-- Empty State -->
+        <div class="p-12 text-center">
+            <div class="w-12 h-12 rounded-full bg-slate-100 text-slate-400 mx-auto flex items-center justify-center mb-3 text-xl">
+                👤
+            </div>
+            <h3 class="text-base font-semibold text-slate-800">No user accounts found</h3>
+            <p class="text-xs text-slate-500 max-w-sm mx-auto mt-1 mb-4">
+                {% if search_query %}
+                No user accounts match your search "{{ search_query }}".
+                {% else %}
+                No user accounts exist in this role category.
+                {% endif %}
+            </p>
+            <button
+                hx-get="/users/new"
+                hx-target="#modal-container"
+                class="btn-primary inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold"
+            >
+                <i data-lucide="user-plus" class="w-3.5 h-3.5"></i>
+                Create New User
+            </button>
+        </div>
+        {% endif %}
+    </div>
+
+</div>

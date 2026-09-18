@@ -168,6 +168,12 @@ async def download_csv_report(report_type: str = "summary", user=Depends(get_cur
                 writer.writerow(["Total Roles Assigned", roles_count])
             except Exception as e:
                 print(f"Error exporting summary CSV: {e}")
+        else:
+            writer.writerow(["Active Members", 0])
+            writer.writerow(["Total Prospects & Guests", 0])
+            writer.writerow(["Meetings Scheduled", 0])
+            writer.writerow(["Total Attendance Logged", 0])
+            writer.writerow(["Total Roles Assigned", 0])
 
     output.seek(0)
     return StreamingResponse(

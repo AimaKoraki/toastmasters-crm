@@ -2,7 +2,7 @@ from fastapi import APIRouter, Request, Form, Depends, HTTPException, status as 
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from app.config import supabase
-from app.dependencies import get_current_user
+from app.dependencies import get_current_user, require_exco
 import datetime
 
 router = APIRouter()
@@ -148,7 +148,7 @@ async def create_member(
     phone: str = Form(""),
     status: str = Form("Active"),
     pathway_level: str = Form("Level 1"),
-    user=Depends(get_current_user)
+    user=Depends(require_exco)
 ):
     """
     Creates a new member in the members table and returns the refreshed members directory partial.
@@ -256,7 +256,7 @@ async def update_member(
     phone: str = Form(""),
     status: str = Form("Active"),
     pathway_level: str = Form("Level 1"),
-    user=Depends(get_current_user)
+    user=Depends(require_exco)
 ):
     """
     Updates an existing member's contact, status, and Pathways advancement.

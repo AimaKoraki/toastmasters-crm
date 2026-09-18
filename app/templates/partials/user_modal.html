@@ -1,0 +1,176 @@
+<div id="modal-backdrop" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-4 overflow-y-auto">
+    <div class="bg-white rounded-2xl shadow-xl border border-slate-200 w-full max-w-lg overflow-hidden animate-in fade-in zoom-in-95 duration-200 my-8">
+        
+        <!-- Modal Header -->
+        <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+            <div class="flex items-center gap-2.5">
+                <div class="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center">
+                    <i data-lucide="user-plus" class="w-4 h-4"></i>
+                </div>
+                <div>
+                    <h3 class="font-bold text-slate-900 text-base">Add User Account</h3>
+                    <p class="text-xs text-slate-500">Create new login credentials for an Exco officer or Admin.</p>
+                </div>
+            </div>
+            <button 
+                type="button" 
+                onclick="document.getElementById('modal-backdrop').remove()" 
+                class="text-slate-400 hover:text-slate-600 p-1 rounded-lg hover:bg-slate-100 transition"
+            >
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+        </div>
+
+        <!-- Inline Error Banner (HTMX Guard) -->
+        {% if error %}
+        <div class="mx-6 mt-4 p-3 rounded-lg bg-rose-50 border border-rose-200 flex items-start gap-2.5 text-xs text-rose-700">
+            <i data-lucide="alert-circle" class="w-4 h-4 text-rose-500 shrink-0 mt-0.5"></i>
+            <div>
+                <span class="font-semibold">Validation Error:</span>
+                <span>{{ error }}</span>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Form -->
+        <form 
+            hx-post="/users" 
+            hx-target="#main-content" 
+            hx-swap="innerHTML"
+            class="p-6 space-y-4"
+        >
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <!-- Full Name -->
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Full Name <span class="text-rose-500">*</span></label>
+                    <input 
+                        type="text" 
+                        name="full_name" 
+                        value="{{ form_data.full_name if form_data else '' }}"
+                        required 
+                        placeholder="e.g. Kasun Perera"
+                        class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-900 placeholder-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition"
+                    >
+                </div>
+
+                <!-- Username -->
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Username <span class="text-rose-500">*</span></label>
+                    <input 
+                        type="text" 
+                        name="username" 
+                        value="{{ form_data.username if form_data else '' }}"
+                        required 
+                        placeholder="e.g. kasun_p"
+                        class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-900 placeholder-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition font-mono"
+                    >
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <!-- Email -->
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Email Address <span class="text-rose-500">*</span></label>
+                    <input 
+                        type="email" 
+                        name="email" 
+                        value="{{ form_data.email if form_data else '' }}"
+                        required 
+                        placeholder="e.g. kasun@apiit.lk"
+                        class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-900 placeholder-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition"
+                    >
+                </div>
+
+                <!-- Role -->
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Account Role <span class="text-rose-500">*</span></label>
+                    <select 
+                        name="role" 
+                        required
+                        class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition"
+                    >
+                        <option value="Exco" {% if form_data and form_data.role == 'Exco' %}selected{% endif %}>Exco Officer (Standard Operations)</option>
+                        <option value="Admin" {% if form_data and form_data.role == 'Admin' %}selected{% endif %}>Administrator (Full System Access)</option>
+                        <option value="Viewer" {% if form_data and form_data.role == 'Viewer' %}selected{% endif %}>Viewer (Read-Only Access)</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Optional 1-to-1 Member Link -->
+            <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1">
+                    Link to Club Member (1-to-1)
+                    <span class="text-slate-400 font-normal ml-1">Optional</span>
+                </label>
+                <select 
+                    name="member_id" 
+                    class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition"
+                >
+                    <option value="">-- None (Standalone Account) --</option>
+                    {% for m in available_members %}
+                    <option value="{{ m.id }}" {% if form_data and form_data.member_id == m.id|string %}selected{% endif %}>
+                        {{ m.full_name }} ({{ m.email }})
+                    </option>
+                    {% endfor %}
+                </select>
+                <p class="text-[11px] text-slate-400 mt-1">Associates this account with a member in the club roster. Each member can link to at most one user account.</p>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t border-slate-100">
+                <!-- Initial Password -->
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Password <span class="text-rose-500">*</span></label>
+                    <input 
+                        type="password" 
+                        name="password" 
+                        required 
+                        placeholder="Min. 8 chars, 1 letter &amp; number"
+                        class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-900 placeholder-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition"
+                    >
+                </div>
+
+                <!-- Confirm Password -->
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Confirm Password <span class="text-rose-500">*</span></label>
+                    <input 
+                        type="password" 
+                        name="confirm_password" 
+                        required 
+                        placeholder="Re-enter password"
+                        class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-900 placeholder-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition"
+                    >
+                </div>
+            </div>
+
+            <div class="flex items-center gap-2 pt-2">
+                <input 
+                    type="checkbox" 
+                    id="is_active" 
+                    name="is_active" 
+                    value="true" 
+                    checked
+                    class="rounded border-slate-300 text-blue-600 focus:ring-blue-500 h-4 w-4"
+                >
+                <label for="is_active" class="text-xs font-medium text-slate-700">Activate account immediately</label>
+            </div>
+
+            <!-- Footer Actions -->
+            <div class="pt-4 border-t border-slate-100 flex items-center justify-end gap-3">
+                <button 
+                    type="button" 
+                    onclick="document.getElementById('modal-backdrop').remove()" 
+                    class="px-4 py-2 text-xs font-semibold text-slate-600 hover:text-slate-800 hover:bg-slate-100 rounded-lg transition"
+                >
+                    Cancel
+                </button>
+                <button 
+                    type="submit" 
+                    class="btn-primary px-4 py-2 text-xs font-semibold rounded-lg shadow-xs hover:shadow transition flex items-center gap-1.5"
+                >
+                    <i data-lucide="check" class="w-4 h-4"></i>
+                    Save Account
+                </button>
+            </div>
+        </form>
+    </div>
+</div>

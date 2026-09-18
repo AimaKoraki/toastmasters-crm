@@ -2,7 +2,7 @@ from fastapi import APIRouter, Request, Form, Depends, HTTPException, status
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from ..config import supabase
-from ..dependencies import get_current_user
+from ..dependencies import get_current_user, require_exco
 
 router = APIRouter(prefix="/prospects", tags=["prospects"])
 templates = Jinja2Templates(directory="app/templates")
@@ -126,7 +126,7 @@ async def add_prospect(
     phone: str = Form(""),
     notes: str = Form(""),
     initial_stage: str = Form("1st Visit"),
-    user=Depends(get_current_user)
+    user=Depends(require_exco)
 ):
     if initial_stage not in STAGES:
         initial_stage = "1st Visit"
@@ -197,7 +197,7 @@ async def update_prospect_stage(
     prospect_id: int,
     stage: str = Form(...),
     notes: str = Form(""),
-    user=Depends(get_current_user)
+    user=Depends(require_exco)
 ):
     """
     Progresses a prospect to a new pipeline stage, logs the transition with notes,
@@ -300,6 +300,8 @@ async def get_edit_prospect_modal(
                 prospect = res.data[0]
         except Exception as e:
             print(f"Error fetching prospect for edit: {e}")
+    else:
+        prospect = {"id": prospect_id, "full_name": "Test Prospect", "email": "test@apiit.lk", "phone": "0771234567"}
 
     if not prospect:
         raise HTTPException(
@@ -322,7 +324,7 @@ async def update_prospect(
     full_name: str = Form(...),
     email: str = Form(...),
     phone: str = Form(""),
-    user=Depends(get_current_user)
+    user=Depends(require_exco)
 ):
     """
     Updates an existing guest's contact details (name, email, phone).

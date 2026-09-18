@@ -2,7 +2,7 @@ from fastapi import APIRouter, Request, Form, Depends, HTTPException, status
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from ..config import supabase
-from ..dependencies import get_current_user
+from ..dependencies import get_current_user, require_exco
 
 router = APIRouter(tags=["meetings"])
 templates = Jinja2Templates(directory="app/templates")
@@ -85,7 +85,7 @@ async def create_meeting(
     meeting_number: int = Form(...),
     meeting_date: str = Form(...),
     theme: str = Form(""),
-    user=Depends(get_current_user)
+    user=Depends(require_exco)
 ):
     if supabase:
         try:
@@ -211,7 +211,7 @@ async def get_meeting_attendance_sheet(request: Request, meeting_id: int, user=D
 
 @router.post("/attendance", response_class=HTMLResponse)
 @router.post("/meetings/attendance/save", response_class=HTMLResponse)
-async def save_batch_attendance(request: Request, user=Depends(get_current_user)):
+async def save_batch_attendance(request: Request, user=Depends(require_exco)):
     """
     Processes batch attendance submission for a meeting.
     Extracts all 'status_{member_id}' inputs and saves them into the attendance table.

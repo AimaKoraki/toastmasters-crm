@@ -2,7 +2,7 @@ from fastapi import APIRouter, Request, Form, Depends, HTTPException, status
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from ..config import supabase
-from ..dependencies import get_current_user
+from ..dependencies import get_current_user, require_exco
 
 router = APIRouter(prefix="/roles", tags=["roles"])
 templates = Jinja2Templates(directory="app/templates")
@@ -142,7 +142,7 @@ async def get_assign_role_modal(request: Request, user=Depends(get_current_user)
 @router.post("", response_class=HTMLResponse)
 async def assign_role(
     request: Request,
-    user=Depends(get_current_user)
+    user=Depends(require_exco)
 ):
     """
     Assigns one or more roles to a member for a given meeting.

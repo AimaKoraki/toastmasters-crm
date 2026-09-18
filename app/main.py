@@ -1,13 +1,59 @@
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, Depends
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 import os
+import secrets
+from contextlib import asynccontextmanager
 from starlette.middleware.sessions import SessionMiddleware
-from app.routers import auth, prospects, meetings, roles, reports, members
-from app.dependencies import get_current_user
-from fastapi import Depends
 
-app = FastAPI(title="Club CRM")
+from app.routers import auth, prospects, meetings, roles, reports, members, users
+from app.dependencies import get_current_user
+from app.utils.security import hash_password
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """
+    Application Lifespan Context Manager.
+    Performs startup auto-bootstrapping for the initial Administrator account.
+    """
+    from app.config import supabase
+    if supabase:
+        try:
+            res = supabase.table("users").select("id", count="exact").execute()
+            if res.count == 0 or (res.count is not None and res.count == 0):
+                admin_email = os.getenv("INITIAL_ADMIN_EMAIL", "admin@apiitkandy.club").strip().lower()
+                admin_pw = os.getenv("INITIAL_ADMIN_PASSWORD")
+                must_change = False
+
+                if not admin_pw:
+                    admin_pw = secrets.token_urlsafe(12)
+                    must_change = True
+                    print("\n" + "=" * 60)
+                    print("[SECURITY] Auto-bootstrapped Initial Administrator Account:")
+                    print("  Username: admin")
+                    print(f"  Email:    {admin_email}")
+                    print(f"  Password: {admin_pw}")
+                    print("  Status:   must_change_password = True")
+                    print("=" * 60 + "\n")
+
+                pw_hash = hash_password(admin_pw)
+                supabase.table("users").insert({
+                    "username": "admin",
+                    "email": admin_email,
+                    "full_name": "System Administrator",
+                    "password_hash": pw_hash,
+                    "role": "Admin",
+                    "is_active": True,
+                    "must_change_password": must_change
+                }).execute()
+        except Exception as e:
+            print(f"Notice: Users table auto-bootstrap check: {e}")
+
+    yield
+
+
+app = FastAPI(title="Club CRM", lifespan=lifespan)
 
 # Add Session Middleware
 session_secret = os.getenv("SESSION_SECRET", "super-secret-exco-key")
@@ -24,15 +70,17 @@ app.include_router(meetings.router)
 app.include_router(roles.router)
 app.include_router(reports.router)
 app.include_router(members.router, prefix="/members", tags=["members"])
+app.include_router(users.router, prefix="/users", tags=["users"])
+
 
 @app.get("/healthz", tags=["health"])
 def health_check():
     """Lightweight probe endpoint for cloud load balancers and uptime monitoring."""
     return {"status": "ok", "app": "APIIT Kandy Club CRM"}
 
+
 @app.get("/")
 def read_root(request: Request, user=Depends(get_current_user)):
-    # Initialize variables with defaults
     members_count = 0
     guests_count = 0
     prospects_count = 0
@@ -40,18 +88,18 @@ def read_root(request: Request, user=Depends(get_current_user)):
     upcoming_meeting = None
     recent_activities = []
     pipeline_data = []
-    
+
     from app.config import supabase
     from datetime import datetime
-    
+
     def parse_time(dt_str):
-        if not dt_str: return datetime.min
-        # Handle ISO format from Supabase
+        if not dt_str:
+            return datetime.min
         try:
             return datetime.fromisoformat(dt_str.replace('Z', '+00:00'))
-        except:
+        except Exception:
             return datetime.min
-            
+
     if supabase:
         # 1. Stat Counters
         try:
@@ -65,7 +113,7 @@ def read_root(request: Request, user=Depends(get_current_user)):
             guests_count = g_res.count if g_res.count is not None else 0
         except Exception:
             pass
-            
+
         try:
             logs_res = supabase.table("prospect_logs").select("member_id, stage, created_at").order("created_at", desc=True).execute()
             latest_stages = {}
@@ -76,7 +124,7 @@ def read_root(request: Request, user=Depends(get_current_user)):
             prospects_count = sum(1 for stage in latest_stages.values() if stage != 'Onboarded')
         except Exception:
             latest_stages = {}
-            
+
         try:
             att_res = supabase.table("attendance").select("status").execute()
             att_records = [a for a in att_res.data if a["status"] in ["Present", "Absent", "Excused"]]
@@ -86,7 +134,7 @@ def read_root(request: Request, user=Depends(get_current_user)):
                 attendance_rate = int((total_present / total_member_meetings) * 100)
         except Exception:
             pass
-            
+
         # 2. Upcoming Meeting
         try:
             meetings_res = supabase.table("meetings").select("*").order("meeting_date", desc=True).limit(1).execute()
@@ -94,9 +142,11 @@ def read_root(request: Request, user=Depends(get_current_user)):
                 upcoming_meeting = meetings_res.data[0]
                 upcoming_meeting["venue"] = "APIIT Kandy Campus"
                 upcoming_meeting["host"] = "TBD"
-                
+
                 # Fetch Host
-                roles_res = supabase.table("role_assignments").select("member_id, role_catalog(role_name), members(full_name)").eq("meeting_id", upcoming_meeting["id"]).execute()
+                roles_res = supabase.table("role_assignments").select(
+                    "member_id, role_catalog(role_name), members(full_name)"
+                ).eq("meeting_id", upcoming_meeting["id"]).execute()
                 for r in roles_res.data:
                     role_cat = r.get("role_catalog")
                     if role_cat and role_cat.get("role_name") == "Meeting Host":
@@ -106,10 +156,12 @@ def read_root(request: Request, user=Depends(get_current_user)):
                         break
         except Exception:
             pass
-            
+
         # 3. Recent Activity Stream
         try:
-            pl_res = supabase.table("prospect_logs").select("created_at, stage, members(full_name)").order("created_at", desc=True).limit(5).execute()
+            pl_res = supabase.table("prospect_logs").select(
+                "created_at, stage, members(full_name)"
+            ).order("created_at", desc=True).limit(5).execute()
             for pl in pl_res.data:
                 name = pl.get("members", {}).get("full_name", "Unknown") if pl.get("members") else "Unknown"
                 text = f"Guest Registered: {name}" if pl["stage"] == "1st Visit" else f"Prospect Stage Updated: {name} ({pl['stage']})"
@@ -118,8 +170,10 @@ def read_root(request: Request, user=Depends(get_current_user)):
                     "parsed_time": parse_time(pl["created_at"]),
                     "text": text
                 })
-                
-            att_recent = supabase.table("attendance").select("created_at, status, meetings(meeting_number), members(full_name)").order("created_at", desc=True).limit(5).execute()
+
+            att_recent = supabase.table("attendance").select(
+                "created_at, status, meetings(meeting_number), members(full_name)"
+            ).order("created_at", desc=True).limit(5).execute()
             for att in att_recent.data:
                 name = att.get("members", {}).get("full_name", "Unknown") if att.get("members") else "Unknown"
                 meeting_num = att.get("meetings", {}).get("meeting_number", "?") if att.get("meetings") else "?"
@@ -128,8 +182,10 @@ def read_root(request: Request, user=Depends(get_current_user)):
                     "parsed_time": parse_time(att["created_at"]),
                     "text": f"Attendance Recorded: {name} (Meeting #{meeting_num})"
                 })
-                
-            roles_recent = supabase.table("role_assignments").select("created_at, role_catalog(role_name), members(full_name)").order("created_at", desc=True).limit(5).execute()
+
+            roles_recent = supabase.table("role_assignments").select(
+                "created_at, role_catalog(role_name), members(full_name)"
+            ).order("created_at", desc=True).limit(5).execute()
             for r in roles_recent.data:
                 name = r.get("members", {}).get("full_name", "Unknown") if r.get("members") else "Unknown"
                 role_name = r.get("role_catalog", {}).get("role_name", "Role") if r.get("role_catalog") else "Role"
@@ -138,12 +194,12 @@ def read_root(request: Request, user=Depends(get_current_user)):
                     "parsed_time": parse_time(r["created_at"]),
                     "text": f"Role Assigned: {role_name} to {name}"
                 })
-                
+
             recent_activities.sort(key=lambda x: x["parsed_time"], reverse=True)
             recent_activities = recent_activities[:5]
         except Exception:
             pass
-            
+
         # 4. Guest Pipeline Table Data (sorted most recent first)
         try:
             prospects_res = supabase.table("members").select("*").eq("status", "Prospect").order("created_at", desc=True).execute()
@@ -162,6 +218,7 @@ def read_root(request: Request, user=Depends(get_current_user)):
 
     context = {
         "request": request,
+        "current_user": user,
         "active_page": "dashboard",
         "members_count": members_count,
         "guests_count": guests_count,
